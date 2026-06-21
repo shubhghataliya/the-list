@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.12)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- Shine overlay -->
+  <rect width="512" height="512" rx="112" fill="url(#shine)"/>
+  <!-- Film strip decorations -->
+  <rect x="56" y="152" width="44" height="208" rx="8" fill="rgba(255,255,255,0.06)"/>
+  <rect x="412" y="152" width="44" height="208" rx="8" fill="rgba(255,255,255,0.06)"/>
+  <!-- Film holes -->
+  <rect x="64" y="172" width="28" height="18" rx="4" fill="rgba(0,0,0,0.3)"/>
+  <rect x="64" y="204" width="28" height="18" rx="4" fill="rgba(0,0,0,0.3)"/>
+  <rect x="64" y="236" width="28" height="18" rx="4" fill="rgba(0,0,0,0.3)"/>
+  <rect x="64" y="268" width="28" height="18" rx="4" fill="rgba(0,0,0,0.3)"/>
+  <rect x="64" y="300" width="28" height="18" rx="4" fill="rgba(0,0,0,0.3)"/>
+  <rect x="420" y="172" width="28" height="18" rx="4" fill="rgba(0,0,0,0.3)"/>
+  <rect x="420" y="204" width="28" height="18" rx="4" fill="rgba(0,0,0,0.3)"/>
+  <rect x="420" y="236" width="28" height="18" rx="4" fill="rgba(0,0,0,0.3)"/>
+  <rect x="420" y="268" width="28" height="18" rx="4" fill="rgba(0,0,0,0.3)"/>
+  <rect x="420" y="300" width="28" height="18" rx="4" fill="rgba(0,0,0,0.3)"/>
+  <!-- TL text -->
+  <text x="256" y="318" font-family="'Arial Black', 'Arial Bold', Gadget, sans-serif" font-weight="900" font-size="196" fill="white" text-anchor="middle" letter-spacing="-8">TL</text>
+</svg>
