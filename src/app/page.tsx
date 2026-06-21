@@ -1,10 +1,13 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { LogOut, Loader2 } from 'lucide-react';
 import { Category, ListData, ListItem } from '@/types';
-import { CATEGORIES, INITIAL_DATA, generateId, getTotalCount } from '@/utils/helpers';
-import useLocalStorage from '@/hooks/useLocalStorage';
+import { CATEGORIES, getTotalCount } from '@/utils/helpers';
+import { useAuth } from '@/hooks/useAuth';
+import { useListData } from '@/hooks/useListData';
 
+import AuthGate from '@/components/AuthGate';
 import Header from '@/components/Header';
 import SearchBar from '@/components/SearchBar';
 import CategoryCard from '@/components/CategoryCard';
@@ -18,7 +21,12 @@ import EmptyState from '@/components/EmptyState';
 type View = 'home' | Category;
 
 export default function Home() {
-  const [data, setData] = useLocalStorage<ListData>('the-list-data', INITIAL_DATA);
+  const { session, loading: authLoading, signOut } = useAuth();
+  const userId = session?.user?.id;
+
+  const { data, loading: dataLoading, addItem, addBulk, updateCategory, deleteItem, importAll } =
+    useListData(userId);
+
   const [view, setView] = useState<View>('home');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFilter, setSearchFilter] = useState<Category | 'all'>('all');
@@ -45,23 +53,6 @@ export default function Home() {
     return results;
   }, [data, searchQuery, searchFilter]);
 
-  const handleAdd = (title: string, category: Category) => {
-    const newItem: ListItem = {
-      id: generateId(),
-      title,
-      category,
-      addedAt: Date.now(),
-    };
-    setData((prev) => ({
-      ...prev,
-      [category]: [newItem, ...prev[category]],
-    }));
-  };
-
-  const handleUpdateItems = (category: Category, items: ListItem[]) => {
-    setData((prev) => ({ ...prev, [category]: items }));
-  };
-
   const handleExport = () => {
     const json = JSON.stringify(data, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
@@ -75,33 +66,48 @@ export default function Home() {
     URL.revokeObjectURL(url);
   };
 
-  const handleImport = (importedData: ListData) => setData(importedData);
-
-  const handleTextImport = (titles: string[], category: Category) => {
-    const now = Date.now();
-    const newItems: ListItem[] = titles.map((title, i) => ({
-      id: generateId() + i,
-      title,
-      category,
-      addedAt: now + i,
-    }));
-    setData((prev) => ({ ...prev, [category]: [...newItems, ...prev[category]] }));
-  };
-
   const defaultAddCategory: Category = view === 'home' ? 'movies' : (view as Category);
   const isSearching = searchQuery.trim().length > 0;
 
+  /* ── Loading / Auth gates ── */
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 text-violet-400 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!session) return <AuthGate />;
+
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
-      {/* ── Centered container ── */}
       <div className="max-w-3xl mx-auto px-4 py-6 pb-28">
 
         {view === 'home' ? (
-          /* ══════════════════════════════════
-             HOME VIEW
-             ══════════════════════════════════ */
+          /* ══════════════ HOME ══════════════ */
           <>
-            <Header totalCount={totalCount} />
+            {/* Header + sign out */}
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h1 className="text-2xl font-bold text-zinc-100 tracking-tight leading-none">The List</h1>
+                <p className="text-zinc-500 text-xs mt-1">Your personal watched library</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 bg-violet-500/10 border border-violet-500/20 rounded-full px-3 py-1.5">
+                  <span className="text-violet-300 font-bold text-sm tabular-nums">{totalCount}</span>
+                  <span className="text-zinc-500 text-xs">titles</span>
+                </div>
+                <button
+                  onClick={signOut}
+                  className="p-2 text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800 rounded-xl transition-all"
+                  aria-label="Sign out"
+                  title="Sign out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
 
             <SearchBar
               value={searchQuery}
@@ -117,9 +123,8 @@ export default function Home() {
                   <span className="text-zinc-300 font-semibold">{searchResults?.length ?? 0}</span>{' '}
                   {searchResults?.length === 1 ? 'result' : 'results'} for &ldquo;{searchQuery.trim()}&rdquo;
                 </p>
-
                 {searchResults?.length === 0 ? (
-                  <EmptyState message="No results found" subMessage="Try a different search term or filter" icon="🔍" />
+                  <EmptyState message="No results found" subMessage="Try a different term or filter" icon="🔍" />
                 ) : (
                   <div className="space-y-5">
                     {CATEGORIES.map((cat) => {
@@ -134,16 +139,11 @@ export default function Home() {
                             </span>
                             <span className="text-zinc-700 text-xs">({catResults.length})</span>
                           </div>
-                          <div className="space-y-2">
+                          <div className="space-y-1.5">
                             {catResults.map((item, i) => (
-                              <div
-                                key={item.id}
-                                className="bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 flex items-center gap-3 animate-fade-in"
-                              >
-                                <span className="text-zinc-600 text-xs tabular-nums w-6 text-right flex-shrink-0 font-mono">
-                                  {i + 1}.
-                                </span>
-                                <span className="text-zinc-100 text-sm font-medium truncate">{item.title}</span>
+                              <div key={item.id} className="flex items-baseline gap-3 py-2 border-b border-zinc-800/50 last:border-0 px-1">
+                                <span className="text-zinc-600 text-xs tabular-nums font-mono w-6 text-right flex-shrink-0">{i + 1}.</span>
+                                <span className="text-zinc-200 text-sm">{item.title}</span>
                               </div>
                             ))}
                           </div>
@@ -152,6 +152,13 @@ export default function Home() {
                     })}
                   </div>
                 )}
+              </div>
+            ) : dataLoading ? (
+              /* Data loading */
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 h-36 animate-pulse" />
+                ))}
               </div>
             ) : (
               /* Category grid */
@@ -169,32 +176,29 @@ export default function Home() {
 
             <ImportExport
               data={data}
-              onImport={handleImport}
+              onImport={importAll}
               onExport={handleExport}
               onTextImport={() => setShowTextImport(true)}
             />
           </>
         ) : (
-          /* ══════════════════════════════════
-             CATEGORY DETAIL VIEW
-             ══════════════════════════════════ */
+          /* ══════════════ CATEGORY DETAIL ══════════════ */
           <CategoryDetail
             category={view as Category}
             items={data[view as Category]}
             onBack={() => setView('home')}
-            onUpdateItems={handleUpdateItems}
+            onUpdateItems={updateCategory}
+            onDeleteItem={deleteItem}
           />
         )}
       </div>
 
-      {/* Floating add button */}
       <FAB onClick={() => setShowAdd(true)} />
 
-      {/* Modals */}
       {showAdd && (
         <AddModal
           defaultCategory={defaultAddCategory}
-          onAdd={handleAdd}
+          onAdd={(title, category) => addItem(title, category)}
           onClose={() => setShowAdd(false)}
         />
       )}
@@ -202,7 +206,7 @@ export default function Home() {
       {showTextImport && (
         <TextImportModal
           activeCategory="tv-series"
-          onImport={handleTextImport}
+          onImport={addBulk}
           onClose={() => setShowTextImport(false)}
         />
       )}

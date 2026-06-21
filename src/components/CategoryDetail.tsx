@@ -95,6 +95,7 @@ interface CategoryDetailProps {
   items: ListItem[];
   onBack: () => void;
   onUpdateItems: (category: Category, items: ListItem[]) => void;
+  onDeleteItem?: (id: string, category: Category) => void;
 }
 
 export default function CategoryDetail({
@@ -102,6 +103,7 @@ export default function CategoryDetail({
   items,
   onBack,
   onUpdateItems,
+  onDeleteItem,
 }: CategoryDetailProps) {
   const config = getCategoryConfig(category);
   const [editMode, setEditMode] = useState(false);
@@ -152,7 +154,11 @@ export default function CategoryDetail({
 
   const handleDeleteConfirm = () => {
     if (!deleteTarget) return;
-    onUpdateItems(category, items.filter((i) => i.id !== deleteTarget.id));
+    if (onDeleteItem) {
+      onDeleteItem(deleteTarget.id, category);
+    } else {
+      onUpdateItems(category, items.filter((i) => i.id !== deleteTarget.id));
+    }
     setDeleteTarget(null);
   };
 
