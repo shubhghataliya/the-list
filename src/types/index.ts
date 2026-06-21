@@ -16,8 +16,9 @@ export interface CategoryConfig {
   label: string;
   shortLabel: string;
   icon: string;
+  bgClass: string;
   tabActiveClass: string;
   badgeClass: string;
   textColorClass: string;
-  dotClass: string;
+  borderClass: string;
 }
