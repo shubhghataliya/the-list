@@ -36,12 +36,12 @@ export default function RankRoadmapModal({ seriesCount, onClose }: Props) {
         {/* Current rank summary */}
         <div className={`mx-4 mt-4 p-3 rounded-xl border ${currentRank.bgClass} ${currentRank.borderClass} flex-shrink-0`}>
           <div className="flex items-center gap-3 mb-2">
-            <span className="text-3xl leading-none">{currentRank.badge}</span>
+            <img src={currentRank.imagePath} alt={currentRank.name} className="w-12 h-12 object-contain" />
             <div className="flex-1 min-w-0">
               <p className={`font-bold text-sm ${currentRank.textClass}`}>{currentRank.name}</p>
               {nextRank ? (
                 <p className="text-zinc-500 text-xs">
-                  {nextRank.min - seriesCount} more to reach {nextRank.name} {nextRank.badge}
+                  {nextRank.min - seriesCount} more to reach {nextRank.name}
                 </p>
               ) : (
                 <p className="text-zinc-500 text-xs">Max rank — you&apos;re a legend</p>
@@ -76,7 +76,7 @@ export default function RankRoadmapModal({ seriesCount, onClose }: Props) {
                     : 'bg-zinc-900/50 border-zinc-800/30 opacity-40'
                 }`}
               >
-                <span className="text-xl w-8 text-center leading-none">{rank.badge}</span>
+                <img src={rank.imagePath} alt={rank.name} className="w-9 h-9 object-contain flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-semibold ${isCurrent ? rank.textClass : unlocked ? 'text-zinc-300' : 'text-zinc-600'}`}>
                     {rank.name}

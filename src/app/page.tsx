@@ -134,7 +134,7 @@ export default function Home() {
                     onClick={() => setShowRoadmap(true)}
                     className={`flex items-center gap-1.5 border rounded-full px-2.5 py-1 hover:opacity-80 transition-opacity ${currentRank.bgClass} ${currentRank.borderClass}`}
                   >
-                    <span className="text-sm leading-none">{currentRank.badge}</span>
+                    <img src={currentRank.imagePath} alt={currentRank.name} className="w-5 h-5 object-contain" />
                     <span className={`font-bold text-sm tabular-nums ${currentRank.textClass}`}>{seriesCount}</span>
                     {nextRank && (
                       <span className="text-zinc-600 text-xs tabular-nums">/{nextRank.min}</span>

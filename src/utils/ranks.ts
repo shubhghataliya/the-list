@@ -3,6 +3,7 @@ export type RankConfig = {
   min: number;
   max: number; // -1 = unlimited (final rank)
   badge: string;
+  imagePath: string;
   textClass: string;
   bgClass: string;
   borderClass: string;
@@ -11,40 +12,24 @@ export type RankConfig = {
 
 export const RANKS: RankConfig[] = [
   {
-    name: 'Academy Student', min: 0, max: 24, badge: '📚',
-    textClass: 'text-zinc-400', bgClass: 'bg-zinc-500/10', borderClass: 'border-zinc-500/30', progressClass: 'bg-zinc-500',
-  },
-  {
-    name: 'Genin', min: 25, max: 49, badge: '🍃',
+    name: 'Genin', min: 0, max: 29, badge: '🍃', imagePath: '/ranks/genin.png',
     textClass: 'text-green-400', bgClass: 'bg-green-500/10', borderClass: 'border-green-500/30', progressClass: 'bg-green-500',
   },
   {
-    name: 'Chunin', min: 50, max: 99, badge: '📜',
+    name: 'Chunin', min: 30, max: 59, badge: '🦺', imagePath: '/ranks/chunin.png',
     textClass: 'text-blue-400', bgClass: 'bg-blue-500/10', borderClass: 'border-blue-500/30', progressClass: 'bg-blue-500',
   },
   {
-    name: 'Jonin', min: 100, max: 149, badge: '⚡',
-    textClass: 'text-yellow-400', bgClass: 'bg-yellow-500/10', borderClass: 'border-yellow-500/30', progressClass: 'bg-yellow-500',
+    name: 'Special Jonin', min: 60, max: 89, badge: '⭐', imagePath: '/ranks/jonin.png',
+    textClass: 'text-sky-400', bgClass: 'bg-sky-500/10', borderClass: 'border-sky-500/30', progressClass: 'bg-sky-500',
   },
   {
-    name: 'ANBU', min: 150, max: 199, badge: '🎭',
+    name: 'ANBU Operative', min: 90, max: 119, badge: '🎭', imagePath: '/ranks/anbu.png',
     textClass: 'text-purple-400', bgClass: 'bg-purple-500/10', borderClass: 'border-purple-500/30', progressClass: 'bg-purple-500',
   },
   {
-    name: 'Akatsuki Member', min: 200, max: 299, badge: '☁️',
-    textClass: 'text-red-400', bgClass: 'bg-red-500/10', borderClass: 'border-red-500/30', progressClass: 'bg-red-500',
-  },
-  {
-    name: 'Akatsuki Elite', min: 300, max: 399, badge: '💀',
-    textClass: 'text-rose-400', bgClass: 'bg-rose-500/10', borderClass: 'border-rose-500/30', progressClass: 'bg-rose-500',
-  },
-  {
-    name: 'Kage', min: 400, max: 499, badge: '🏔️',
+    name: 'Kage', min: 120, max: -1, badge: '🏔️', imagePath: '/ranks/kage.png',
     textClass: 'text-orange-400', bgClass: 'bg-orange-500/10', borderClass: 'border-orange-500/30', progressClass: 'bg-orange-500',
-  },
-  {
-    name: 'Hokage', min: 500, max: -1, badge: '🔥',
-    textClass: 'text-amber-400', bgClass: 'bg-amber-500/10', borderClass: 'border-amber-500/30', progressClass: 'bg-amber-500',
   },
 ];
 
