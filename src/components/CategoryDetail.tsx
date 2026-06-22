@@ -20,7 +20,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ArrowLeft, Pencil, Check, Trash2, X, GripVertical } from 'lucide-react';
-import { Category, ListItem } from '@/types';
+import { Category, CategoryConfig, ListItem } from '@/types';
 import { getCategoryConfig, sortItems } from '@/utils/helpers';
 import SortBar, { SortOption } from '@/components/SortBar';
 import EmptyState from '@/components/EmptyState';
@@ -93,6 +93,7 @@ function SortableRow({ item, index, onUpdateTitle, onRemove }: SortableRowProps)
 interface CategoryDetailProps {
   category: Category;
   items: ListItem[];
+  allCategories: CategoryConfig[];
   onBack: () => void;
   onUpdateItems: (category: Category, items: ListItem[]) => void;
   onDeleteItem?: (id: string, category: Category) => void;
@@ -101,11 +102,12 @@ interface CategoryDetailProps {
 export default function CategoryDetail({
   category,
   items,
+  allCategories,
   onBack,
   onUpdateItems,
   onDeleteItem,
 }: CategoryDetailProps) {
-  const config = getCategoryConfig(category);
+  const config = getCategoryConfig(category, allCategories);
   const [editMode, setEditMode] = useState(false);
   const [editItems, setEditItems] = useState<ListItem[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>('newest');

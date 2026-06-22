@@ -1,4 +1,4 @@
-export type Category = 'movies' | 'tv-series' | 'anime' | 'k-drama';
+export type Category = string;
 
 export interface ListItem {
   id: string;
@@ -7,15 +7,14 @@ export interface ListItem {
   addedAt: number;
 }
 
-export type ListData = {
-  [K in Category]: ListItem[];
-};
+export type ListData = Record<string, ListItem[]>;
 
 export interface CategoryConfig {
-  id: Category;
+  id: string;
   label: string;
   shortLabel: string;
   icon: string;
+  type: 'movies' | 'series';
   bgClass: string;
   tabActiveClass: string;
   badgeClass: string;

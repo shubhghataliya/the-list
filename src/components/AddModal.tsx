@@ -2,16 +2,16 @@
 
 import { useState } from 'react';
 import { X, Plus } from 'lucide-react';
-import { Category } from '@/types';
-import { CATEGORIES } from '@/utils/helpers';
+import { Category, CategoryConfig } from '@/types';
 
 interface AddModalProps {
   defaultCategory: Category;
+  categories: CategoryConfig[];
   onAdd: (title: string, category: Category) => void;
   onClose: () => void;
 }
 
-export default function AddModal({ defaultCategory, onAdd, onClose }: AddModalProps) {
+export default function AddModal({ defaultCategory, categories, onAdd, onClose }: AddModalProps) {
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<Category>(defaultCategory);
 
@@ -23,6 +23,8 @@ export default function AddModal({ defaultCategory, onAdd, onClose }: AddModalPr
     onClose();
   };
 
+  const selectedConfig = categories.find((c) => c.id === category);
+
   return (
     <div
       className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-4 animate-fade-in"
@@ -32,7 +34,6 @@ export default function AddModal({ defaultCategory, onAdd, onClose }: AddModalPr
         className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 w-full max-w-md shadow-2xl animate-slide-up sm:animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-zinc-100 font-semibold">Add Title</h2>
           <button
@@ -44,7 +45,6 @@ export default function AddModal({ defaultCategory, onAdd, onClose }: AddModalPr
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Title input */}
           <input
             type="text"
             value={title}
@@ -54,11 +54,10 @@ export default function AddModal({ defaultCategory, onAdd, onClose }: AddModalPr
             className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 transition-all text-sm"
           />
 
-          {/* Category selector */}
           <div>
             <p className="text-zinc-500 text-xs mb-2 font-medium">Add to category</p>
-            <div className="grid grid-cols-2 gap-2">
-              {CATEGORIES.map((cat) => (
+            <div className="grid grid-cols-2 gap-2 max-h-52 overflow-y-auto">
+              {categories.map((cat) => (
                 <button
                   key={cat.id}
                   type="button"
@@ -70,23 +69,22 @@ export default function AddModal({ defaultCategory, onAdd, onClose }: AddModalPr
                   }`}
                 >
                   <span className="text-base leading-none">{cat.icon}</span>
-                  <span>{cat.label}</span>
+                  <span className="truncate">{cat.label}</span>
                   {category === cat.id && (
-                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-current" />
+                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-current flex-shrink-0" />
                   )}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={!title.trim()}
             className="w-full bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl py-3 font-semibold text-sm transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
           >
             <Plus className="w-4 h-4" />
-            Add to {CATEGORIES.find((c) => c.id === category)?.label}
+            Add to {selectedConfig?.label ?? category}
           </button>
         </form>
       </div>

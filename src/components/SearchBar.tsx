@@ -1,17 +1,17 @@
 'use client';
 
 import { Search, X } from 'lucide-react';
-import { Category } from '@/types';
-import { CATEGORIES } from '@/utils/helpers';
+import { Category, CategoryConfig } from '@/types';
 
 interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
   filterCategory: Category | 'all';
   onFilterChange: (cat: Category | 'all') => void;
+  categories: CategoryConfig[];
 }
 
-export default function SearchBar({ value, onChange, filterCategory, onFilterChange }: SearchBarProps) {
+export default function SearchBar({ value, onChange, filterCategory, onFilterChange, categories }: SearchBarProps) {
   return (
     <div className="mb-4 space-y-2">
       <div className="relative">
@@ -34,7 +34,6 @@ export default function SearchBar({ value, onChange, filterCategory, onFilterCha
         )}
       </div>
 
-      {/* Category filter pills — only shown while searching */}
       {value && (
         <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 animate-fade-in">
           <button
@@ -47,7 +46,7 @@ export default function SearchBar({ value, onChange, filterCategory, onFilterCha
           >
             All
           </button>
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => onFilterChange(cat.id)}

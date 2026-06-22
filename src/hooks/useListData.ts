@@ -15,13 +15,12 @@ interface DbRow {
 }
 
 function toListItem(row: DbRow): ListItem {
-  return { id: row.id, title: row.title, category: row.category as Category, addedAt: row.added_at };
+  return { id: row.id, title: row.title, category: row.category, addedAt: row.added_at };
 }
 
 function buildData(rows: DbRow[]): ListData {
-  const data: ListData = { movies: [], 'tv-series': [], anime: [], 'k-drama': [] };
+  const data: ListData = { ...INITIAL_DATA };
 
-  // null-position (new) items: newest first; positioned items: by position asc
   const sorted = [...rows].sort((a, b) => {
     if (a.position === null && b.position === null) return b.added_at - a.added_at;
     if (a.position === null) return -1;
@@ -30,8 +29,8 @@ function buildData(rows: DbRow[]): ListData {
   });
 
   sorted.forEach((row) => {
-    const cat = row.category as Category;
-    if (cat in data) data[cat].push(toListItem(row));
+    if (!data[row.category]) data[row.category] = [];
+    data[row.category].push(toListItem(row));
   });
 
   return data;
@@ -63,28 +62,25 @@ export function useListData(userId: string | undefined) {
     return () => { supabase.removeChannel(channel); };
   }, [userId, fetchData]);
 
-  /* ── Add single item ── */
   const addItem = useCallback(async (title: string, category: Category) => {
     const item: ListItem = { id: generateId(), title, category, addedAt: Date.now() };
-    setData((prev) => ({ ...prev, [category]: [item, ...prev[category]] }));
+    setData((prev) => ({ ...prev, [category]: [item, ...(prev[category] ?? [])] }));
     await supabase.from('list_items').insert({
       id: item.id, user_id: userId, title, category, added_at: item.addedAt, position: null,
     });
   }, [userId]);
 
-  /* ── Add many items (text import) ── */
   const addBulk = useCallback(async (titles: string[], category: Category) => {
     const now = Date.now();
     const items: ListItem[] = titles.map((title, i) => ({
       id: generateId(), title, category, addedAt: now + i,
     }));
-    setData((prev) => ({ ...prev, [category]: [...items, ...prev[category]] }));
+    setData((prev) => ({ ...prev, [category]: [...items, ...(prev[category] ?? [])] }));
     await supabase.from('list_items').insert(
       items.map((item) => ({ id: item.id, user_id: userId, title: item.title, category, added_at: item.addedAt, position: null }))
     );
   }, [userId]);
 
-  /* ── Replace entire category (edit/reorder/rename/delete) ── */
   const updateCategory = useCallback(async (category: Category, items: ListItem[]) => {
     setData((prev) => ({ ...prev, [category]: items }));
     await supabase.from('list_items').delete().eq('user_id', userId).eq('category', category);
@@ -95,13 +91,11 @@ export function useListData(userId: string | undefined) {
     }
   }, [userId]);
 
-  /* ── Delete single item (view mode) ── */
   const deleteItem = useCallback(async (id: string, category: Category) => {
-    setData((prev) => ({ ...prev, [category]: prev[category].filter((i) => i.id !== id) }));
+    setData((prev) => ({ ...prev, [category]: (prev[category] ?? []).filter((i) => i.id !== id) }));
     await supabase.from('list_items').delete().eq('id', id);
   }, []);
 
-  /* ── Import full dataset ── */
   const importAll = useCallback(async (importedData: ListData) => {
     setData(importedData);
     await supabase.from('list_items').delete().eq('user_id', userId);
