@@ -324,7 +324,7 @@ export default function CategoryDetail({
   const config = getCategoryConfig(category, allCategories);
   const [editMode, setEditMode] = useState(false);
   const [editItems, setEditItems] = useState<ListItem[]>([]);
-  const [sortBy, setSortBy] = useState<SortOption>('oldest');
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [deleteTarget, setDeleteTarget] = useState<ListItem | null>(null);
   const [fetchingPosters, setFetchingPosters] = useState(false);
   const [posterProgress, setPosterProgress] = useState({ done: 0, total: 0 });
@@ -411,6 +411,9 @@ export default function CategoryDetail({
       });
     }
   };
+
+  const getLabel = (i: number, total: number) =>
+    sortBy === 'newest' ? total - i : i + 1;
 
   const handleDeleteConfirm = () => {
     if (!deleteTarget) return;
@@ -688,7 +691,7 @@ export default function CategoryDetail({
                     <span className="text-zinc-500 text-[7px] leading-tight text-center font-medium line-clamp-3">{item.title}</span>
                   </div>
                 )}
-                <span className="text-zinc-600 text-xs tabular-nums font-mono flex-shrink-0 w-5 text-right self-center">{i + 1}.</span>
+                <span className="text-zinc-600 text-xs tabular-nums font-mono flex-shrink-0 w-5 text-right self-center">{getLabel(i, sortedItems.length)}.</span>
                 <span className="text-zinc-200 text-sm flex-1 min-w-0 self-center">{item.title}</span>
                 <button onClick={() => setDeleteTarget(item)}
                   className="flex-shrink-0 p-1.5 rounded-lg text-zinc-800 hover:text-red-400 hover:bg-red-400/10 transition-all opacity-0 group-hover:opacity-100 active:scale-95 self-center"
@@ -702,7 +705,7 @@ export default function CategoryDetail({
           /* ── Grid view ── */
           <div className="grid grid-cols-5 gap-2">
             {sortedItems.map((item, i) => (
-              <div key={item.id} className="group relative flex flex-col">
+              <div key={item.id} className="group relative flex flex-col overflow-hidden">
                 {/* Poster */}
                 <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800 border border-zinc-700/50">
                   {item.posterPath ? (
@@ -714,7 +717,7 @@ export default function CategoryDetail({
                   )}
                   {/* Index badge */}
                   <div className="absolute top-1 left-1 bg-black/70 rounded-md px-1.5 py-0.5 text-[9px] text-zinc-300 font-mono backdrop-blur-sm">
-                    {i + 1}
+                    {getLabel(i, sortedItems.length)}
                   </div>
                   {/* Delete overlay */}
                   <button
