@@ -24,8 +24,8 @@ export default function RankCelebrationModal({ rank, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Badge */}
-        <div className="w-32 h-32 flex items-center justify-center mx-auto mb-5">
-          <img src={rank.imagePath} alt={rank.name} className="w-full h-full object-contain drop-shadow-2xl" />
+        <div className={`w-28 h-28 rounded-full ${rank.bgClass} border-2 ${rank.borderClass} flex items-center justify-center mx-auto mb-5`}>
+          <span className="text-6xl leading-none">{rank.badge}</span>
         </div>
 
         <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-2">Rank Up!</p>

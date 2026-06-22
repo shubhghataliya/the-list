@@ -21,4 +21,5 @@ export interface CategoryConfig {
   badgeClass: string;
   textColorClass: string;
   borderClass: string;
+  bgImage?: string;
 }

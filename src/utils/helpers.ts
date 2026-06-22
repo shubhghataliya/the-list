@@ -13,6 +13,7 @@ export const CATEGORIES: CategoryConfig[] = [
     badgeClass: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
     textColorClass: 'text-blue-400',
     borderClass: 'border-blue-500/30',
+    bgImage: '/categories/global_bg.png',
   },
   {
     id: 'anime',
@@ -25,6 +26,7 @@ export const CATEGORIES: CategoryConfig[] = [
     badgeClass: 'bg-orange-500/10 text-orange-400 border border-orange-500/20',
     textColorClass: 'text-orange-400',
     borderClass: 'border-orange-500/30',
+    bgImage: '/categories/anime_bg.png',
   },
   {
     id: 'k-drama',
@@ -37,6 +39,7 @@ export const CATEGORIES: CategoryConfig[] = [
     badgeClass: 'bg-pink-500/10 text-pink-400 border border-pink-500/20',
     textColorClass: 'text-pink-400',
     borderClass: 'border-pink-500/30',
+    bgImage: '/categories/kdrama_bg.png',
   },
   {
     id: 'bollywood',
@@ -49,6 +52,7 @@ export const CATEGORIES: CategoryConfig[] = [
     badgeClass: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
     textColorClass: 'text-emerald-400',
     borderClass: 'border-emerald-500/30',
+    bgImage: '/categories/hindi_bg.png',
   },
 ];
 

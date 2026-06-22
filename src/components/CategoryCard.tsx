@@ -19,69 +19,87 @@ export default function CategoryCard({ config, items, onClick }: CategoryCardPro
   const remaining = items.length - PREVIEW;
   const posterItems = preview.filter((i) => i.posterPath);
   const showPosters = posterItems.length >= 2;
+  const hasBgImage = !!config.bgImage;
 
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-2xl p-4 transition-all duration-200 hover:bg-zinc-800/60 active:scale-[0.98] group flex flex-col"
+      className={`relative w-full text-left rounded-2xl overflow-hidden transition-all duration-200 active:scale-[0.98] group flex flex-col min-h-[140px] ${
+        hasBgImage ? 'border border-zinc-700/50' : `bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/60`
+      }`}
     >
-      {/* Card header */}
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2.5">
-          <div className={`w-10 h-10 rounded-xl ${config.bgClass} border ${config.borderClass} flex items-center justify-center flex-shrink-0`}>
-            <span className="text-xl leading-none">{config.icon}</span>
-          </div>
-          <div className="min-w-0">
-            <h3 className={`font-semibold text-sm leading-tight ${config.textColorClass}`}>
-              {config.label}
-            </h3>
-            <p className="text-zinc-500 text-xs mt-0.5">
-              {items.length === 0 ? 'Empty' : `${items.length} title${items.length !== 1 ? 's' : ''}`}
-            </p>
-          </div>
-        </div>
-        <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 transition-colors flex-shrink-0 mt-0.5" />
-      </div>
-
-      {/* Content preview */}
-      {items.length === 0 ? (
-        <p className="text-zinc-700 text-xs italic">Nothing added yet</p>
-      ) : showPosters ? (
-        /* Poster strip */
-        <div className="flex gap-1.5 items-end">
-          {posterItems.slice(0, 4).map((item) => (
-            <div key={item.id} className="relative flex-shrink-0">
-              <Image
-                src={`${TMDB_IMG}${item.posterPath}`}
-                alt={item.title}
-                width={48}
-                height={72}
-                className="rounded-lg object-cover"
-              />
-            </div>
-          ))}
-          {remaining > 0 && (
-            <div className="w-12 h-[72px] rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center flex-shrink-0">
-              <span className="text-zinc-500 text-[10px] font-semibold">+{remaining}</span>
-            </div>
-          )}
-        </div>
-      ) : (
-        /* Text list */
-        <div className="space-y-1.5 min-w-0">
-          {preview.map((item, i) => (
-            <div key={item.id} className="flex items-baseline gap-1.5 min-w-0">
-              <span className="text-zinc-700 text-[10px] tabular-nums flex-shrink-0 w-4 text-right leading-none">
-                {i + 1}.
-              </span>
-              <span className="text-zinc-400 text-xs truncate leading-tight">{item.title}</span>
-            </div>
-          ))}
-          {remaining > 0 && (
-            <p className="text-zinc-600 text-[10px] pl-5">+{remaining} more</p>
-          )}
-        </div>
+      {/* Background image + overlay */}
+      {hasBgImage && (
+        <>
+          <img
+            src={config.bgImage}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/50 to-black/30" />
+        </>
       )}
+
+      {/* Content */}
+      <div className="relative z-10 p-4 flex flex-col h-full flex-1">
+        {/* Card header */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-2.5">
+            {!hasBgImage && (
+              <div className={`w-10 h-10 rounded-xl ${config.bgClass} border ${config.borderClass} flex items-center justify-center flex-shrink-0`}>
+                <span className="text-xl leading-none">{config.icon}</span>
+              </div>
+            )}
+            <div className="min-w-0">
+              <h3 className={`font-bold text-sm leading-tight ${hasBgImage ? 'text-white drop-shadow-md' : config.textColorClass}`}>
+                {config.label}
+              </h3>
+              <p className={`text-xs mt-0.5 ${hasBgImage ? 'text-zinc-300' : 'text-zinc-500'}`}>
+                {items.length === 0 ? 'Empty' : `${items.length} title${items.length !== 1 ? 's' : ''}`}
+              </p>
+            </div>
+          </div>
+          <ChevronRight className={`w-4 h-4 transition-colors flex-shrink-0 mt-0.5 ${hasBgImage ? 'text-white/60 group-hover:text-white' : 'text-zinc-600 group-hover:text-zinc-400'}`} />
+        </div>
+
+        {/* Content preview */}
+        {items.length === 0 ? (
+          <p className={`text-xs italic ${hasBgImage ? 'text-zinc-400' : 'text-zinc-700'}`}>Nothing added yet</p>
+        ) : showPosters ? (
+          <div className="flex gap-1.5 items-end">
+            {posterItems.slice(0, 4).map((item) => (
+              <div key={item.id} className="relative flex-shrink-0">
+                <Image
+                  src={`${TMDB_IMG}${item.posterPath}`}
+                  alt={item.title}
+                  width={48}
+                  height={72}
+                  className="rounded-lg object-cover"
+                />
+              </div>
+            ))}
+            {remaining > 0 && (
+              <div className="w-12 h-[72px] rounded-lg bg-black/40 border border-white/10 flex items-center justify-center flex-shrink-0">
+                <span className="text-white/60 text-[10px] font-semibold">+{remaining}</span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-1.5 min-w-0">
+            {preview.map((item, i) => (
+              <div key={item.id} className="flex items-baseline gap-1.5 min-w-0">
+                <span className={`text-[10px] tabular-nums flex-shrink-0 w-4 text-right leading-none ${hasBgImage ? 'text-white/40' : 'text-zinc-700'}`}>
+                  {i + 1}.
+                </span>
+                <span className={`text-xs truncate leading-tight ${hasBgImage ? 'text-white/80' : 'text-zinc-400'}`}>{item.title}</span>
+              </div>
+            ))}
+            {remaining > 0 && (
+              <p className={`text-[10px] pl-5 ${hasBgImage ? 'text-white/40' : 'text-zinc-600'}`}>+{remaining} more</p>
+            )}
+          </div>
+        )}
+      </div>
     </button>
   );
 }
