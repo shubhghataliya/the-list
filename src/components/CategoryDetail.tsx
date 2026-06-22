@@ -21,7 +21,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import Image from 'next/image';
-import { ArrowLeft, Pencil, Check, Trash2, X, GripVertical, ImageIcon, Loader2, List, LayoutGrid, Search, Film, ImageOff, Download } from 'lucide-react';
+import { ArrowLeft, Pencil, Check, Trash2, X, GripVertical, ImageIcon, Loader2, List, LayoutGrid, Grid2X2, Search, Film, ImageOff, Download } from 'lucide-react';
 import { Category, CategoryConfig, ListItem } from '@/types';
 import { getCategoryConfig, sortItems } from '@/utils/helpers';
 import SortBar, { SortOption } from '@/components/SortBar';
@@ -334,7 +334,7 @@ export default function CategoryDetail({
   const [showExport, setShowExport] = useState(false);
   const [categoryLabel, setCategoryLabel] = useState(config.label);
   const isCustom = category.startsWith('custom-');
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
+  const [viewMode, setViewMode] = useState<'list' | 'grid' | 'bigGrid'>('grid');
   const [posterPickerId, setPosterPickerId] = useState<string | null>(null);
   const [pickerQuery, setPickerQuery] = useState('');
   const [pickerSearching, setPickerSearching] = useState(false);
@@ -583,6 +583,13 @@ export default function CategoryDetail({
               <List className="w-3.5 h-3.5" />
             </button>
             <button
+              onClick={() => setViewMode('bigGrid')}
+              className={`p-1.5 rounded-lg transition-all ${viewMode === 'bigGrid' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+              aria-label="Big grid view"
+            >
+              <Grid2X2 className="w-3.5 h-3.5" />
+            </button>
+            <button
               onClick={() => setViewMode('grid')}
               className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
               aria-label="Grid view"
@@ -624,7 +631,7 @@ export default function CategoryDetail({
               </SortableContext>
             ) : (
               <SortableContext items={editItems.map((i) => i.id)} strategy={rectSortingStrategy}>
-                <div className="grid grid-cols-5 gap-2">
+                <div className={viewMode === 'bigGrid' ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-5 gap-2'}>
                   {editItems.map((item, i) => (
                     <SortableGridItem
                       key={item.id}
@@ -672,9 +679,11 @@ export default function CategoryDetail({
                   <div className="grid grid-cols-3 gap-2">
                     {pickerResults.map((r) => (
                       <button key={r.id} onClick={() => {
+                        const sy = window.scrollY;
                         if (r.poster_path) updatePosterInEdit(posterPickerId, r.poster_path);
                         setPosterPickerId(null);
                         setPickerResults([]);
+                        requestAnimationFrame(() => window.scrollTo({ top: sy, behavior: 'instant' }));
                       }} className="group flex flex-col gap-1">
                         <div className="aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800 border border-zinc-700 group-hover:border-violet-500/50 transition-all">
                           {r.poster_path
@@ -685,7 +694,7 @@ export default function CategoryDetail({
                       </button>
                     ))}
                     {editItems.find((i) => i.id === posterPickerId)?.posterPath && (
-                      <button onClick={() => { updatePosterInEdit(posterPickerId, undefined); setPosterPickerId(null); }}
+                      <button onClick={() => { const sy = window.scrollY; updatePosterInEdit(posterPickerId, undefined); setPosterPickerId(null); requestAnimationFrame(() => window.scrollTo({ top: sy, behavior: 'instant' })); }}
                         className="flex flex-col gap-1">
                         <div className="aspect-[2/3] rounded-xl bg-zinc-800 border border-zinc-700 hover:border-red-500/40 flex items-center justify-center transition-all">
                           <ImageOff className="w-5 h-5 text-zinc-600" />
@@ -704,7 +713,34 @@ export default function CategoryDetail({
         /* ══════════════════════════════════
            VIEW MODE — list or grid
            ══════════════════════════════════ */
-        viewMode === 'list' ? (
+        viewMode === 'bigGrid' ? (
+          <div className="grid grid-cols-2 gap-3">
+            {sortedItems.map((item, i) => (
+              <div key={item.id} className="group relative flex flex-col overflow-hidden">
+                <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800 border border-zinc-700/50">
+                  {item.posterPath ? (
+                    <Image src={`${TMDB_IMG_MD}${item.posterPath}`} alt={item.title} fill className="object-cover" sizes="50vw" />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 p-3">
+                      <span className="text-zinc-400 text-sm leading-tight text-center font-medium line-clamp-4">{item.title}</span>
+                    </div>
+                  )}
+                  <div className="absolute top-1.5 left-1.5 bg-black/70 rounded-md px-1.5 py-0.5 text-[10px] text-zinc-300 font-mono backdrop-blur-sm">
+                    {getLabel(i, sortedItems.length)}
+                  </div>
+                  <button
+                    onClick={() => setDeleteTarget(item)}
+                    className="absolute top-1.5 right-1.5 p-1.5 rounded-md bg-black/60 text-zinc-400 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100 active:scale-95 backdrop-blur-sm"
+                    aria-label={`Delete ${item.title}`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <p className="text-zinc-300 text-xs mt-2 leading-tight line-clamp-2 px-0.5">{item.title}</p>
+              </div>
+            ))}
+          </div>
+        ) : viewMode === 'list' ? (
           <div>
             {sortedItems.map((item, i) => (
               <div

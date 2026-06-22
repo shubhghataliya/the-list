@@ -36,7 +36,7 @@ export default function CategoryCard({ config, items, onClick }: CategoryCardPro
             alt=""
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/50 to-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-black/40" />
         </>
       )}
 
@@ -51,10 +51,10 @@ export default function CategoryCard({ config, items, onClick }: CategoryCardPro
               </div>
             )}
             <div className="min-w-0">
-              <h3 className={`font-bold text-sm leading-tight ${hasBgImage ? 'text-white drop-shadow-md' : config.textColorClass}`}>
+              <h3 className={`font-bold text-sm leading-tight ${hasBgImage ? 'text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.9)]' : config.textColorClass}`}>
                 {config.label}
               </h3>
-              <p className={`text-xs mt-0.5 ${hasBgImage ? 'text-zinc-300' : 'text-zinc-500'}`}>
+              <p className={`text-xs mt-0.5 ${hasBgImage ? 'text-zinc-200 [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]' : 'text-zinc-500'}`}>
                 {items.length === 0 ? 'Empty' : `${items.length} title${items.length !== 1 ? 's' : ''}`}
               </p>
             </div>
@@ -91,7 +91,7 @@ export default function CategoryCard({ config, items, onClick }: CategoryCardPro
                 <span className={`text-[10px] tabular-nums flex-shrink-0 w-4 text-right leading-none ${hasBgImage ? 'text-white/40' : 'text-zinc-700'}`}>
                   {i + 1}.
                 </span>
-                <span className={`text-xs truncate leading-tight ${hasBgImage ? 'text-white/80' : 'text-zinc-400'}`}>{item.title}</span>
+                <span className={`text-xs truncate leading-tight ${hasBgImage ? 'text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]' : 'text-zinc-400'}`}>{item.title}</span>
               </div>
             ))}
             {remaining > 0 && (
