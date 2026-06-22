@@ -311,6 +311,7 @@ interface CategoryDetailProps {
   onUpdateItems: (category: Category, items: ListItem[]) => void;
   onDeleteItem?: (id: string, category: Category) => void;
   onUpdatePoster?: (id: string, posterPath: string) => void;
+  onRenameCategory?: (id: string, newLabel: string) => void;
 }
 
 export default function CategoryDetail({
@@ -321,6 +322,7 @@ export default function CategoryDetail({
   onUpdateItems,
   onDeleteItem,
   onUpdatePoster,
+  onRenameCategory,
 }: CategoryDetailProps) {
   const config = getCategoryConfig(category, allCategories);
   const [editMode, setEditMode] = useState(false);
@@ -330,6 +332,8 @@ export default function CategoryDetail({
   const [fetchingPosters, setFetchingPosters] = useState(false);
   const [posterProgress, setPosterProgress] = useState({ done: 0, total: 0 });
   const [showExport, setShowExport] = useState(false);
+  const [categoryLabel, setCategoryLabel] = useState(config.label);
+  const isCustom = category.startsWith('custom-');
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
   const [posterPickerId, setPosterPickerId] = useState<string | null>(null);
   const [pickerQuery, setPickerQuery] = useState('');
@@ -350,10 +354,14 @@ export default function CategoryDetail({
   const cancelEdit = () => {
     setEditMode(false);
     setEditItems([]);
+    setCategoryLabel(config.label);
   };
 
   const saveEdit = () => {
     onUpdateItems(category, editItems.filter((i) => i.title.trim() !== ''));
+    if (isCustom && categoryLabel.trim() && categoryLabel.trim() !== config.label) {
+      onRenameCategory?.(category, categoryLabel.trim());
+    }
     setEditMode(false);
     setEditItems([]);
   };
@@ -531,8 +539,17 @@ export default function CategoryDetail({
         <div className={`w-12 h-12 rounded-2xl ${config.bgClass} border ${config.borderClass} flex items-center justify-center flex-shrink-0`}>
           <span className="text-2xl leading-none">{config.icon}</span>
         </div>
-        <div>
-          <h2 className={`text-xl font-bold ${config.textColorClass}`}>{config.label}</h2>
+        <div className="min-w-0">
+          {editMode && isCustom ? (
+            <input
+              value={categoryLabel}
+              onChange={(e) => setCategoryLabel(e.target.value)}
+              maxLength={32}
+              className={`text-xl font-bold ${config.textColorClass} bg-transparent border-b border-dashed border-current/40 focus:outline-none focus:border-current w-full pb-0.5`}
+            />
+          ) : (
+            <h2 className={`text-xl font-bold ${config.textColorClass}`}>{categoryLabel}</h2>
+          )}
           <p className="text-zinc-500 text-sm">
             {editMode
               ? `Editing ${editItems.length} title${editItems.length !== 1 ? 's' : ''}`

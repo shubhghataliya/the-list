@@ -26,5 +26,15 @@ export function useCustomCategories() {
     return config;
   };
 
-  return { customCategories, addCustomCategory };
+  const renameCustomCategory = (id: string, newLabel: string) => {
+    const updated = customCategories.map((c) =>
+      c.id === id ? { ...c, label: newLabel, shortLabel: newLabel.length > 8 ? newLabel.slice(0, 8) : newLabel } : c
+    );
+    setCustomCategories(updated);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    } catch {}
+  };
+
+  return { customCategories, addCustomCategory, renameCustomCategory };
 }

@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Loader2, Tv } from 'lucide-react';
+import { Loader2, Tv, Film } from 'lucide-react';
 import { Category, ListItem } from '@/types';
-import { CATEGORIES, getTotalCount } from '@/utils/helpers';
+import { CATEGORIES, getTotalCount, getTypeCount } from '@/utils/helpers';
 import { useAuth } from '@/hooks/useAuth';
 import { useListData } from '@/hooks/useListData';
 import { useCustomCategories } from '@/hooks/useCustomCategories';
@@ -29,7 +29,7 @@ export default function Home() {
   const { data, loading: dataLoading, addItem, addBulk, updateCategory, deleteItem, updatePoster, importAll } =
     useListData(userId);
 
-  const { customCategories, addCustomCategory } = useCustomCategories();
+  const { customCategories, addCustomCategory, renameCustomCategory } = useCustomCategories();
 
   const allCategories = useMemo(() => [...CATEGORIES, ...customCategories], [customCategories]);
 
@@ -43,6 +43,7 @@ export default function Home() {
   const [showProfile, setShowProfile] = useState(false);
 
   const totalCount = useMemo(() => getTotalCount(data), [data]);
+  const moviesCount = useMemo(() => getTypeCount(data, 'movies', allCategories), [data, allCategories]);
 
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
@@ -102,9 +103,17 @@ export default function Home() {
               </div>
               <div className="flex items-center gap-2">
                 {/* Stats */}
-                <div className="flex items-center gap-1 bg-violet-500/10 border border-violet-500/20 rounded-full px-2.5 py-1">
-                  <Tv className="w-3 h-3 text-violet-400" />
-                  <span className="text-violet-300 font-bold text-sm tabular-nums">{totalCount}</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1 bg-violet-500/10 border border-violet-500/20 rounded-full px-2.5 py-1">
+                    <Tv className="w-3 h-3 text-violet-400" />
+                    <span className="text-violet-300 font-bold text-sm tabular-nums">{totalCount}</span>
+                  </div>
+                  {moviesCount > 0 && (
+                    <div className="flex items-center gap-1 bg-blue-500/10 border border-blue-500/20 rounded-full px-2.5 py-1">
+                      <Film className="w-3 h-3 text-blue-400" />
+                      <span className="text-blue-300 font-bold text-sm tabular-nums">{moviesCount}</span>
+                    </div>
+                  )}
                 </div>
                 {/* Burger */}
                 <BurgerMenu
@@ -199,6 +208,7 @@ export default function Home() {
             onUpdateItems={updateCategory}
             onDeleteItem={deleteItem}
             onUpdatePoster={updatePoster}
+            onRenameCategory={renameCustomCategory}
           />
         )}
       </div>
