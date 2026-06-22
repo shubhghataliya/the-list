@@ -4,12 +4,16 @@ import { AlertTriangle } from 'lucide-react';
 
 interface DeleteConfirmModalProps {
   title: string;
+  heading?: string;
+  message?: string;
   onConfirm: () => void;
   onCancel: () => void;
 }
 
 export default function DeleteConfirmModal({
   title,
+  heading = 'Remove title?',
+  message,
   onConfirm,
   onCancel,
 }: DeleteConfirmModalProps) {
@@ -26,12 +30,11 @@ export default function DeleteConfirmModal({
           <div className="w-9 h-9 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center flex-shrink-0">
             <AlertTriangle className="w-4 h-4 text-red-400" />
           </div>
-          <h2 className="text-zinc-100 font-semibold text-base">Remove title?</h2>
+          <h2 className="text-zinc-100 font-semibold text-base">{heading}</h2>
         </div>
 
         <p className="text-zinc-400 text-sm mb-5 pl-12 leading-relaxed">
-          <span className="text-zinc-200 font-medium">&ldquo;{title}&rdquo;</span> will be removed
-          from your list. This cannot be undone.
+          {message ?? <><span className="text-zinc-200 font-medium">&ldquo;{title}&rdquo;</span> will be removed from your list. This cannot be undone.</>}
         </p>
 
         <div className="flex gap-2.5">

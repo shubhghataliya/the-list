@@ -337,6 +337,7 @@ export default function CategoryDetail({
   const [editItems, setEditItems] = useState<ListItem[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [deleteTarget, setDeleteTarget] = useState<ListItem | null>(null);
+  const [showDeleteAll, setShowDeleteAll] = useState(false);
   const [fetchingPosters, setFetchingPosters] = useState(false);
   const [posterProgress, setPosterProgress] = useState({ done: 0, total: 0 });
   const [showExport, setShowExport] = useState(false);
@@ -495,7 +496,7 @@ export default function CategoryDetail({
         {editMode ? (
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setEditItems([])}
+              onClick={() => setShowDeleteAll(true)}
               disabled={editItems.length === 0}
               className="flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 disabled:opacity-30 disabled:cursor-not-allowed text-red-400 border border-red-500/20 rounded-xl px-3 py-2 text-xs font-medium transition-all active:scale-[0.98]"
               title="Delete all items"
@@ -645,7 +646,7 @@ export default function CategoryDetail({
               </SortableContext>
             ) : (
               <SortableContext items={editItems.map((i) => i.id)} strategy={rectSortingStrategy}>
-                <div className={viewMode === 'bigGrid' ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-5 gap-2'}>
+                <div className={viewMode === 'bigGrid' ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3' : 'grid grid-cols-5 sm:grid-cols-7 md:grid-cols-9 lg:grid-cols-12 gap-2'}>
                   {editItems.map((item, i) => (
                     <SortableGridItem
                       key={item.id}
@@ -728,12 +729,12 @@ export default function CategoryDetail({
            VIEW MODE — list or grid
            ══════════════════════════════════ */
         viewMode === 'bigGrid' ? (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
             {sortedItems.map((item, i) => (
               <div key={item.id} className="group relative flex flex-col overflow-hidden">
                 <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800 border border-zinc-700/50">
                   {item.posterPath ? (
-                    <Image src={`${TMDB_IMG_MD}${item.posterPath}`} alt={item.title} fill className="object-cover" sizes="50vw" />
+                    <Image src={`${TMDB_IMG_MD}${item.posterPath}`} alt={item.title} fill className="object-cover" sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw" />
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 p-3">
                       <span className="text-zinc-400 text-sm leading-tight text-center font-medium line-clamp-4">{item.title}</span>
@@ -782,13 +783,13 @@ export default function CategoryDetail({
           </div>
         ) : (
           /* ── Grid view ── */
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-5 sm:grid-cols-7 md:grid-cols-9 lg:grid-cols-12 gap-2">
             {sortedItems.map((item, i) => (
               <div key={item.id} className="group relative flex flex-col overflow-hidden">
                 {/* Poster */}
                 <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800 border border-zinc-700/50">
                   {item.posterPath ? (
-                    <Image src={`${TMDB_IMG_MD}${item.posterPath}`} alt={item.title} fill className="object-cover" sizes="20vw" />
+                    <Image src={`${TMDB_IMG_MD}${item.posterPath}`} alt={item.title} fill className="object-cover" sizes="(max-width: 640px) 20vw, (max-width: 1024px) 12vw, 8vw" />
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 p-2">
                       <span className="text-zinc-400 text-[10px] leading-tight text-center font-medium line-clamp-4">{item.title}</span>
@@ -812,6 +813,17 @@ export default function CategoryDetail({
             ))}
           </div>
         )
+      )}
+
+      {showDeleteAll && createPortal(
+        <DeleteConfirmModal
+          title=""
+          heading="Delete everything?"
+          message={`All ${editItems.length} titles will be permanently removed. This cannot be undone.`}
+          onConfirm={() => { setEditItems([]); setShowDeleteAll(false); }}
+          onCancel={() => setShowDeleteAll(false)}
+        />,
+        document.body
       )}
 
       {deleteTarget && createPortal(

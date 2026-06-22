@@ -117,7 +117,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
-      <div className="max-w-3xl mx-auto px-4 py-6 pb-28">
+      <div className="w-full px-4 md:px-8 lg:px-12 xl:px-16 py-6 pb-28">
 
         {view === 'home' ? (
           <>
@@ -201,13 +201,13 @@ export default function Home() {
                 )}
               </div>
             ) : dataLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {[0, 1, 2, 3].map((i) => (
                   <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 h-36 animate-pulse" />
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {allCategories.map((cat) => (
                   <CategoryCard
                     key={cat.id}
