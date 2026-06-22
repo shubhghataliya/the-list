@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { LogOut, Loader2, Film, Tv } from 'lucide-react';
+import { Loader2, Film, Tv } from 'lucide-react';
 import { Category, ListItem } from '@/types';
 import { CATEGORIES, getTypeCount } from '@/utils/helpers';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,7 +17,7 @@ import FAB from '@/components/FAB';
 import ImportExport from '@/components/ImportExport';
 import TextImportModal from '@/components/TextImportModal';
 import EmptyState from '@/components/EmptyState';
-import BurgerMenu from '@/components/BurgerMenu';
+import BurgerMenu, { ProfileSheet } from '@/components/BurgerMenu';
 import NewCategoryModal from '@/components/NewCategoryModal';
 
 type View = 'home' | Category;
@@ -40,6 +40,7 @@ export default function Home() {
   const [showTextImport, setShowTextImport] = useState(false);
   const [showData, setShowData] = useState(false);
   const [showNewCategory, setShowNewCategory] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   const moviesCount = useMemo(() => getTypeCount(data, 'movies', allCategories), [data, allCategories]);
   const seriesCount = useMemo(() => getTypeCount(data, 'series', allCategories), [data, allCategories]);
@@ -112,19 +113,11 @@ export default function Home() {
                     <span className="text-emerald-300 font-bold text-sm tabular-nums">{seriesCount}</span>
                   </div>
                 </div>
-                {/* Logout */}
-                <button
-                  onClick={signOut}
-                  className="p-2 text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800 rounded-xl transition-all"
-                  aria-label="Sign out"
-                  title="Sign out"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
                 {/* Burger */}
                 <BurgerMenu
                   onDataClick={() => setShowData((v) => !v)}
                   onNewCategoryClick={() => setShowNewCategory(true)}
+                  onProfileClick={() => setShowProfile(true)}
                 />
               </div>
             </div>
@@ -240,6 +233,16 @@ export default function Home() {
         <NewCategoryModal
           onAdd={(name, type) => addCustomCategory(name, type)}
           onClose={() => setShowNewCategory(false)}
+        />
+      )}
+
+      {showProfile && (
+        <ProfileSheet
+          email={session.user.email ?? ''}
+          createdAt={session.user.created_at}
+          totalItems={Object.values(data).reduce((sum, arr) => sum + arr.length, 0)}
+          onSignOut={signOut}
+          onClose={() => setShowProfile(false)}
         />
       )}
     </main>
