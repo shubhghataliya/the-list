@@ -20,7 +20,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import Image from 'next/image';
-import { ArrowLeft, Pencil, Check, Trash2, X, GripVertical, ImageIcon, Loader2 } from 'lucide-react';
+import { ArrowLeft, Pencil, Check, Trash2, X, GripVertical, ImageIcon, Loader2, List, LayoutGrid } from 'lucide-react';
 import { Category, CategoryConfig, ListItem } from '@/types';
 import { getCategoryConfig, sortItems } from '@/utils/helpers';
 import SortBar, { SortOption } from '@/components/SortBar';
@@ -121,6 +121,7 @@ export default function CategoryDetail({
   const [deleteTarget, setDeleteTarget] = useState<ListItem | null>(null);
   const [fetchingPosters, setFetchingPosters] = useState(false);
   const [posterProgress, setPosterProgress] = useState({ done: 0, total: 0 });
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -289,9 +290,29 @@ export default function CategoryDetail({
         </div>
       )}
 
-      {/* ── Sort bar (view mode only) ── */}
+      {/* ── Sort bar + view toggle (view mode only) ── */}
       {!editMode && items.length > 1 && (
-        <SortBar count={items.length} label={config.label.toLowerCase()} sortBy={sortBy} onChange={setSortBy} />
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <SortBar count={items.length} label={config.label.toLowerCase()} sortBy={sortBy} onChange={setSortBy} />
+          </div>
+          <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-xl p-1 gap-0.5 flex-shrink-0">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+              aria-label="List view"
+            >
+              <List className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-zinc-700 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'}`}
+              aria-label="Grid view"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
       )}
 
       {/* ── Empty state ── */}
@@ -323,47 +344,65 @@ export default function CategoryDetail({
         </DndContext>
       ) : (
         /* ══════════════════════════════════
-           VIEW MODE — plain list, no boxes
+           VIEW MODE — list or grid
            ══════════════════════════════════ */
-        <div>
-          {sortedItems.map((item, i) => (
-            <div
-              key={item.id}
-              className="group flex items-center gap-3 py-2 border-b border-zinc-800/50 last:border-0 hover:bg-zinc-900/40 px-1 rounded-lg transition-colors"
-            >
-              {/* Poster or grey placeholder */}
-              {item.posterPath ? (
-                <Image
-                  src={`${TMDB_IMG}${item.posterPath}`}
-                  alt={item.title}
-                  width={28}
-                  height={42}
-                  className="rounded-md object-cover flex-shrink-0"
-                />
-              ) : (
-                <div className="w-7 h-[42px] rounded-md bg-zinc-800 border border-zinc-700/50 flex items-center justify-center flex-shrink-0 overflow-hidden px-0.5">
-                  <span className="text-zinc-500 text-[7px] leading-tight text-center font-medium line-clamp-3">
-                    {item.title}
-                  </span>
-                </div>
-              )}
-
-              {/* Index number */}
-              <span className="text-zinc-600 text-xs tabular-nums font-mono flex-shrink-0 w-5 text-right self-center">
-                {i + 1}.
-              </span>
-
-              <span className="text-zinc-200 text-sm flex-1 min-w-0 self-center">{item.title}</span>
-              <button
-                onClick={() => setDeleteTarget(item)}
-                className="flex-shrink-0 p-1.5 rounded-lg text-zinc-800 hover:text-red-400 hover:bg-red-400/10 transition-all opacity-0 group-hover:opacity-100 active:scale-95 self-center"
-                aria-label={`Delete ${item.title}`}
+        viewMode === 'list' ? (
+          <div>
+            {sortedItems.map((item, i) => (
+              <div
+                key={item.id}
+                className="group flex items-center gap-3 py-2 border-b border-zinc-800/50 last:border-0 hover:bg-zinc-900/40 px-1 rounded-lg transition-colors"
               >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ))}
-        </div>
+                {item.posterPath ? (
+                  <Image src={`${TMDB_IMG}${item.posterPath}`} alt={item.title} width={28} height={42} className="rounded-md object-cover flex-shrink-0" />
+                ) : (
+                  <div className="w-7 h-[42px] rounded-md bg-zinc-800 border border-zinc-700/50 flex items-center justify-center flex-shrink-0 overflow-hidden px-0.5">
+                    <span className="text-zinc-500 text-[7px] leading-tight text-center font-medium line-clamp-3">{item.title}</span>
+                  </div>
+                )}
+                <span className="text-zinc-600 text-xs tabular-nums font-mono flex-shrink-0 w-5 text-right self-center">{i + 1}.</span>
+                <span className="text-zinc-200 text-sm flex-1 min-w-0 self-center">{item.title}</span>
+                <button onClick={() => setDeleteTarget(item)}
+                  className="flex-shrink-0 p-1.5 rounded-lg text-zinc-800 hover:text-red-400 hover:bg-red-400/10 transition-all opacity-0 group-hover:opacity-100 active:scale-95 self-center"
+                  aria-label={`Delete ${item.title}`}>
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* ── Grid view ── */
+          <div className="grid grid-cols-5 gap-2">
+            {sortedItems.map((item, i) => (
+              <div key={item.id} className="group relative flex flex-col">
+                {/* Poster */}
+                <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-800 border border-zinc-700/50">
+                  {item.posterPath ? (
+                    <Image src={`${TMDB_IMG_MD}${item.posterPath}`} alt={item.title} fill className="object-cover" sizes="20vw" />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 p-2">
+                      <span className="text-zinc-400 text-[10px] leading-tight text-center font-medium line-clamp-4">{item.title}</span>
+                    </div>
+                  )}
+                  {/* Index badge */}
+                  <div className="absolute top-1 left-1 bg-black/70 rounded-md px-1.5 py-0.5 text-[9px] text-zinc-300 font-mono backdrop-blur-sm">
+                    {i + 1}
+                  </div>
+                  {/* Delete overlay */}
+                  <button
+                    onClick={() => setDeleteTarget(item)}
+                    className="absolute top-1 right-1 p-1 rounded-md bg-black/60 text-zinc-400 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100 active:scale-95 backdrop-blur-sm"
+                    aria-label={`Delete ${item.title}`}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+                {/* Title */}
+                <p className="text-zinc-300 text-[11px] mt-1.5 leading-tight line-clamp-2 px-0.5">{item.title}</p>
+              </div>
+            ))}
+          </div>
+        )
       )}
 
       {deleteTarget && (

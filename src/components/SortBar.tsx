@@ -20,7 +20,7 @@ const OPTIONS: { id: SortOption; label: string; icon: React.ReactNode }[] = [
 
 export default function SortBar({ count, label, sortBy, onChange }: SortBarProps) {
   return (
-    <div className="flex items-center justify-between mb-3">
+    <div className="flex items-center justify-between mb-3 flex-1">
       <span className="text-zinc-500 text-xs">
         <span className="text-zinc-300 font-semibold tabular-nums">{count}</span>{' '}
         {label}
