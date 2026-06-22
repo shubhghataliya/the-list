@@ -331,7 +331,7 @@ export default function CategoryDetail({
               key={item.id}
               className="group flex items-center gap-3 py-2 border-b border-zinc-800/50 last:border-0 hover:bg-zinc-900/40 px-1 rounded-lg transition-colors"
             >
-              {/* Poster thumbnail */}
+              {/* Poster or grey placeholder */}
               {item.posterPath ? (
                 <Image
                   src={`${TMDB_IMG}${item.posterPath}`}
@@ -341,15 +341,18 @@ export default function CategoryDetail({
                   className="rounded-md object-cover flex-shrink-0"
                 />
               ) : (
-                <span className="text-zinc-600 text-xs tabular-nums font-mono flex-shrink-0 w-7 text-right self-center">
-                  {i + 1}.
-                </span>
+                <div className="w-7 h-[42px] rounded-md bg-zinc-800 border border-zinc-700/50 flex items-center justify-center flex-shrink-0 overflow-hidden px-0.5">
+                  <span className="text-zinc-500 text-[7px] leading-tight text-center font-medium line-clamp-3">
+                    {item.title}
+                  </span>
+                </div>
               )}
-              {item.posterPath && (
-                <span className="text-zinc-600 text-xs tabular-nums font-mono flex-shrink-0 w-5 text-right self-center">
-                  {i + 1}.
-                </span>
-              )}
+
+              {/* Index number */}
+              <span className="text-zinc-600 text-xs tabular-nums font-mono flex-shrink-0 w-5 text-right self-center">
+                {i + 1}.
+              </span>
+
               <span className="text-zinc-200 text-sm flex-1 min-w-0 self-center">{item.title}</span>
               <button
                 onClick={() => setDeleteTarget(item)}

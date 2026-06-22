@@ -319,10 +319,16 @@ export default function TextImportModal({ activeCategory, onImport, onClose }: T
                         )}
                       </div>
                     ) : (
-                      <div className="w-40 h-60 rounded-2xl bg-zinc-800 border-2 border-dashed border-zinc-700 flex flex-col items-center justify-center gap-2">
+                      <div className="w-40 h-60 rounded-2xl bg-zinc-800 border border-zinc-700 flex flex-col items-center justify-center gap-3 px-4">
                         {item.results.length === 0
-                          ? <><Tv className="w-8 h-8 text-zinc-600" /><span className="text-xs text-zinc-600 text-center px-2">Not found on TMDB</span></>
-                          : <><Film className="w-8 h-8 text-zinc-600" /><span className="text-xs text-zinc-600">No poster</span></>}
+                          ? <Tv className="w-6 h-6 text-zinc-600 flex-shrink-0" />
+                          : <Film className="w-6 h-6 text-zinc-600 flex-shrink-0" />}
+                        <span className="text-zinc-400 text-xs text-center leading-snug font-medium line-clamp-4">
+                          {item.title}
+                        </span>
+                        <span className="text-zinc-600 text-[10px] text-center">
+                          {item.results.length === 0 ? 'Not found' : 'No poster'}
+                        </span>
                       </div>
                     )}
                   </button>
