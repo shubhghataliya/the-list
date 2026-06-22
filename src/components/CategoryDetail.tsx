@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -60,6 +60,7 @@ function SortableRow({ item, index, onUpdateTitle, onUpdatePoster, onRemove }: S
   const [query, setQuery] = useState(item.title);
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<TMDBResult[]>([]);
+  const rowDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -68,12 +69,12 @@ function SortableRow({ item, index, onUpdateTitle, onUpdatePoster, onRemove }: S
     opacity: isDragging ? 0.6 : 1,
   };
 
-  const runSearch = async () => {
-    if (!query.trim()) return;
+  const runSearch = async (q = query) => {
+    if (!q.trim()) return;
     setSearching(true);
     try {
       const res = await fetch(
-        `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&query=${encodeURIComponent(query.trim())}&include_adult=false`
+        `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&query=${encodeURIComponent(q.trim())}&include_adult=false`
       );
       const data = await res.json();
       setResults(
@@ -84,6 +85,14 @@ function SortableRow({ item, index, onUpdateTitle, onUpdatePoster, onRemove }: S
     } catch {}
     setSearching(false);
   };
+
+  useEffect(() => {
+    if (!showSearch || !query.trim()) return;
+    if (rowDebounceRef.current) clearTimeout(rowDebounceRef.current);
+    rowDebounceRef.current = setTimeout(() => runSearch(query), 400);
+    return () => { if (rowDebounceRef.current) clearTimeout(rowDebounceRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, showSearch]);
 
   const pickPoster = (result: TMDBResult) => {
     if (result.poster_path) onUpdatePoster(item.id, result.poster_path);
@@ -166,7 +175,7 @@ function SortableRow({ item, index, onUpdateTitle, onUpdatePoster, onRemove }: S
               className="flex-1 bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-1.5 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-violet-500/50 text-xs"
             />
             <button
-              onClick={runSearch}
+              onClick={() => runSearch()}
               disabled={searching}
               className="flex-shrink-0 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-lg px-3 py-1.5 transition-all"
             >
@@ -315,11 +324,11 @@ export default function CategoryDetail({
   const config = getCategoryConfig(category, allCategories);
   const [editMode, setEditMode] = useState(false);
   const [editItems, setEditItems] = useState<ListItem[]>([]);
-  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [sortBy, setSortBy] = useState<SortOption>('oldest');
   const [deleteTarget, setDeleteTarget] = useState<ListItem | null>(null);
   const [fetchingPosters, setFetchingPosters] = useState(false);
   const [posterProgress, setPosterProgress] = useState({ done: 0, total: 0 });
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
   const [posterPickerId, setPosterPickerId] = useState<string | null>(null);
   const [pickerQuery, setPickerQuery] = useState('');
   const [pickerSearching, setPickerSearching] = useState(false);
@@ -362,12 +371,12 @@ export default function CategoryDetail({
     setPosterPickerId(id);
   };
 
-  const runPickerSearch = async () => {
-    if (!pickerQuery.trim()) return;
+  const runPickerSearch = async (query = pickerQuery) => {
+    if (!query.trim()) return;
     setPickerSearching(true);
     try {
       const res = await fetch(
-        `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&query=${encodeURIComponent(pickerQuery.trim())}&include_adult=false`
+        `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&query=${encodeURIComponent(query.trim())}&include_adult=false`
       );
       const data = await res.json();
       setPickerResults(
@@ -378,6 +387,15 @@ export default function CategoryDetail({
     } catch {}
     setPickerSearching(false);
   };
+
+  const pickerDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!posterPickerId || !pickerQuery.trim()) return;
+    if (pickerDebounceRef.current) clearTimeout(pickerDebounceRef.current);
+    pickerDebounceRef.current = setTimeout(() => runPickerSearch(pickerQuery), 400);
+    return () => { if (pickerDebounceRef.current) clearTimeout(pickerDebounceRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pickerQuery, posterPickerId]);
 
   const removeFromEdit = (id: string) => {
     setEditItems((prev) => prev.filter((i) => i.id !== id));
@@ -596,16 +614,16 @@ export default function CategoryDetail({
           {posterPickerId && (
             <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-4 animate-fade-in"
               onClick={() => { setPosterPickerId(null); setPickerResults([]); }}>
-              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 w-full max-w-sm shadow-2xl animate-slide-up sm:animate-scale-in space-y-3"
+              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 w-full max-w-sm shadow-2xl animate-slide-up sm:animate-scale-in flex flex-col max-h-[80vh]"
                 onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-3">
                   <p className="text-zinc-100 font-semibold text-sm">Find Poster</p>
                   <button onClick={() => { setPosterPickerId(null); setPickerResults([]); }}
                     className="text-zinc-500 hover:text-zinc-300 p-1.5 rounded-lg hover:bg-zinc-800 transition-colors">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 mb-3">
                   <input
                     value={pickerQuery}
                     onChange={(e) => setPickerQuery(e.target.value)}
@@ -614,12 +632,13 @@ export default function CategoryDetail({
                     autoFocus
                     className="flex-1 bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2.5 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-violet-500/50 text-sm"
                   />
-                  <button onClick={runPickerSearch} disabled={pickerSearching}
+                  <button onClick={() => runPickerSearch()} disabled={pickerSearching}
                     className="flex-shrink-0 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white rounded-xl px-4 transition-all">
                     {pickerSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                   </button>
                 </div>
                 {pickerResults.length > 0 && (
+                  <div className="overflow-y-auto flex-1 -mx-1 px-1">
                   <div className="grid grid-cols-3 gap-2">
                     {pickerResults.map((r) => (
                       <button key={r.id} onClick={() => {
@@ -644,6 +663,7 @@ export default function CategoryDetail({
                         <span className="text-zinc-600 text-[9px] text-center">Remove</span>
                       </button>
                     )}
+                  </div>
                   </div>
                 )}
               </div>
