@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Loader2, Film, Tv } from 'lucide-react';
+import { Loader2, Tv } from 'lucide-react';
 import { Category, ListItem } from '@/types';
-import { CATEGORIES, getTypeCount } from '@/utils/helpers';
+import { CATEGORIES, getTotalCount } from '@/utils/helpers';
 import { useAuth } from '@/hooks/useAuth';
 import { useListData } from '@/hooks/useListData';
 import { useCustomCategories } from '@/hooks/useCustomCategories';
@@ -42,8 +42,7 @@ export default function Home() {
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
-  const moviesCount = useMemo(() => getTypeCount(data, 'movies', allCategories), [data, allCategories]);
-  const seriesCount = useMemo(() => getTypeCount(data, 'series', allCategories), [data, allCategories]);
+  const totalCount = useMemo(() => getTotalCount(data), [data]);
 
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
@@ -76,7 +75,7 @@ export default function Home() {
     URL.revokeObjectURL(url);
   };
 
-  const defaultAddCategory: Category = view === 'home' ? 'movies' : (view as Category);
+  const defaultAddCategory: Category = view === 'home' ? 'global' : (view as Category);
   const isSearching = searchQuery.trim().length > 0;
 
   if (authLoading) {
@@ -103,15 +102,9 @@ export default function Home() {
               </div>
               <div className="flex items-center gap-2">
                 {/* Stats */}
-                <div className="flex items-center gap-1.5">
-                  <div className="flex items-center gap-1 bg-blue-500/10 border border-blue-500/20 rounded-full px-2.5 py-1">
-                    <Film className="w-3 h-3 text-blue-400" />
-                    <span className="text-blue-300 font-bold text-sm tabular-nums">{moviesCount}</span>
-                  </div>
-                  <div className="flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2.5 py-1">
-                    <Tv className="w-3 h-3 text-emerald-400" />
-                    <span className="text-emerald-300 font-bold text-sm tabular-nums">{seriesCount}</span>
-                  </div>
+                <div className="flex items-center gap-1 bg-violet-500/10 border border-violet-500/20 rounded-full px-2.5 py-1">
+                  <Tv className="w-3 h-3 text-violet-400" />
+                  <span className="text-violet-300 font-bold text-sm tabular-nums">{totalCount}</span>
                 </div>
                 {/* Burger */}
                 <BurgerMenu

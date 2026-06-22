@@ -21,12 +21,13 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import Image from 'next/image';
-import { ArrowLeft, Pencil, Check, Trash2, X, GripVertical, ImageIcon, Loader2, List, LayoutGrid, Search, Film, ImageOff } from 'lucide-react';
+import { ArrowLeft, Pencil, Check, Trash2, X, GripVertical, ImageIcon, Loader2, List, LayoutGrid, Search, Film, ImageOff, Download } from 'lucide-react';
 import { Category, CategoryConfig, ListItem } from '@/types';
 import { getCategoryConfig, sortItems } from '@/utils/helpers';
 import SortBar, { SortOption } from '@/components/SortBar';
 import EmptyState from '@/components/EmptyState';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
+import ExportModal from '@/components/ExportModal';
 
 const TMDB_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w92';
@@ -328,6 +329,7 @@ export default function CategoryDetail({
   const [deleteTarget, setDeleteTarget] = useState<ListItem | null>(null);
   const [fetchingPosters, setFetchingPosters] = useState(false);
   const [posterProgress, setPosterProgress] = useState({ done: 0, total: 0 });
+  const [showExport, setShowExport] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
   const [posterPickerId, setPosterPickerId] = useState<string | null>(null);
   const [pickerQuery, setPickerQuery] = useState('');
@@ -504,6 +506,14 @@ export default function CategoryDetail({
                 )}
               </button>
             )}
+            <button
+              onClick={() => setShowExport(true)}
+              disabled={items.length === 0}
+              className="p-2 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl transition-all"
+              title="Export list"
+            >
+              <Download className="w-4 h-4" />
+            </button>
             <button
               onClick={enterEdit}
               disabled={items.length === 0}
@@ -741,6 +751,14 @@ export default function CategoryDetail({
           title={deleteTarget.title}
           onConfirm={handleDeleteConfirm}
           onCancel={() => setDeleteTarget(null)}
+        />
+      )}
+
+      {showExport && (
+        <ExportModal
+          config={config}
+          items={sortedItems}
+          onClose={() => setShowExport(false)}
         />
       )}
     </div>

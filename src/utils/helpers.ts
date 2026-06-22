@@ -3,28 +3,16 @@ import type { SortOption } from '@/components/SortBar';
 
 export const CATEGORIES: CategoryConfig[] = [
   {
-    id: 'movies',
-    label: 'Movies',
-    shortLabel: 'Movies',
-    icon: '🎬',
-    type: 'movies',
+    id: 'global',
+    label: 'Global',
+    shortLabel: 'Global',
+    icon: '🌍',
+    type: 'series',
     bgClass: 'bg-blue-500/10',
     tabActiveClass: 'bg-blue-500/20 text-blue-300 ring-1 ring-inset ring-blue-500/30',
     badgeClass: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
     textColorClass: 'text-blue-400',
     borderClass: 'border-blue-500/30',
-  },
-  {
-    id: 'tv-series',
-    label: 'TV Series',
-    shortLabel: 'TV',
-    icon: '📺',
-    type: 'series',
-    bgClass: 'bg-emerald-500/10',
-    tabActiveClass: 'bg-emerald-500/20 text-emerald-300 ring-1 ring-inset ring-emerald-500/30',
-    badgeClass: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
-    textColorClass: 'text-emerald-400',
-    borderClass: 'border-emerald-500/30',
   },
   {
     id: 'anime',
@@ -49,6 +37,18 @@ export const CATEGORIES: CategoryConfig[] = [
     badgeClass: 'bg-pink-500/10 text-pink-400 border border-pink-500/20',
     textColorClass: 'text-pink-400',
     borderClass: 'border-pink-500/30',
+  },
+  {
+    id: 'bollywood',
+    label: 'Bollywood',
+    shortLabel: 'Bolly',
+    icon: '🎭',
+    type: 'series',
+    bgClass: 'bg-emerald-500/10',
+    tabActiveClass: 'bg-emerald-500/20 text-emerald-300 ring-1 ring-inset ring-emerald-500/30',
+    badgeClass: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+    textColorClass: 'text-emerald-400',
+    borderClass: 'border-emerald-500/30',
   },
 ];
 
@@ -80,10 +80,10 @@ export function buildCustomCategoryConfig(
 }
 
 export const INITIAL_DATA: ListData = {
-  movies: [],
-  'tv-series': [],
+  global: [],
   anime: [],
   'k-drama': [],
+  bollywood: [],
 };
 
 export function getCategoryConfig(id: string, allCategories: CategoryConfig[] = CATEGORIES): CategoryConfig {
