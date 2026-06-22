@@ -14,7 +14,8 @@ interface CategoryCardProps {
 }
 
 export default function CategoryCard({ config, items, onClick }: CategoryCardProps) {
-  const preview = items.slice(0, PREVIEW);
+  const sorted = [...items].sort((a, b) => b.addedAt - a.addedAt);
+  const preview = sorted.slice(0, PREVIEW);
   const remaining = items.length - PREVIEW;
   const posterItems = preview.filter((i) => i.posterPath);
   const showPosters = posterItems.length >= 2;
