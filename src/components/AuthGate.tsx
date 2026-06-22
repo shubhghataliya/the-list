@@ -46,8 +46,10 @@ export default function AuthGate() {
     setError('');
     const { error } = await supabase.auth.signUp({ email: email.trim(), password });
     setLoading(false);
-    if (error) setError(toMsg(error));
-    else setDone(true);
+    if (error) {
+      console.error('Signup error:', error);
+      setError(toMsg(error));
+    } else setDone(true);
   };
 
   return (
