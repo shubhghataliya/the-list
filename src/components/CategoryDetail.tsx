@@ -22,9 +22,10 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import Image from 'next/image';
-import { ArrowLeft, Pencil, Check, Trash2, X, GripVertical, ImageIcon, Loader2, List, LayoutGrid, Grid2X2, Search, Film, ImageOff, Download } from 'lucide-react';
+import { ArrowLeft, Pencil, Check, Trash2, X, GripVertical, ImageIcon, Loader2, List, LayoutGrid, Grid2X2, Search, Film, ImageOff, Download, Star } from 'lucide-react';
 import { Category, CategoryConfig, ListItem } from '@/types';
 import { getCategoryConfig, sortItems } from '@/utils/helpers';
+import { useStarred } from '@/hooks/useStarred';
 import SortBar, { SortOption } from '@/components/SortBar';
 import EmptyState from '@/components/EmptyState';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
@@ -331,6 +332,7 @@ export default function CategoryDetail({
   onRenameCategory,
 }: CategoryDetailProps) {
   const config = getCategoryConfig(category, allCategories);
+  const { starred, toggleStar } = useStarred();
   const [editMode, setEditMode] = useState(false);
   const [editItems, setEditItems] = useState<ListItem[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
@@ -353,7 +355,7 @@ export default function CategoryDetail({
   );
 
   const enterEdit = () => {
-    setEditItems([...items]);
+    setEditItems(sortItems([...items], sortBy));
     setEditMode(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -741,11 +743,11 @@ export default function CategoryDetail({
                     {getLabel(i, sortedItems.length)}
                   </div>
                   <button
-                    onClick={() => setDeleteTarget(item)}
-                    className="absolute top-1.5 right-1.5 p-1.5 rounded-md bg-black/60 text-zinc-400 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100 active:scale-95 backdrop-blur-sm"
-                    aria-label={`Delete ${item.title}`}
+                    onClick={() => toggleStar(item.id)}
+                    className="absolute top-1.5 right-1.5 p-1.5 rounded-md bg-black/50 backdrop-blur-sm transition-all z-10"
+                    aria-label={`Star ${item.title}`}
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Star className={`w-4 h-4 transition-colors ${starred.has(item.id) ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-500 hover:text-yellow-400'}`} />
                   </button>
                 </div>
                 <p className="text-zinc-300 text-xs mt-2 leading-tight line-clamp-2 px-0.5">{item.title}</p>
@@ -768,10 +770,12 @@ export default function CategoryDetail({
                 )}
                 <span className="text-zinc-600 text-xs tabular-nums font-mono flex-shrink-0 w-5 text-right self-center">{getLabel(i, sortedItems.length)}.</span>
                 <span className="text-zinc-200 text-sm flex-1 min-w-0 self-center">{item.title}</span>
-                <button onClick={() => setDeleteTarget(item)}
-                  className="flex-shrink-0 p-1.5 rounded-lg text-zinc-800 hover:text-red-400 hover:bg-red-400/10 transition-all opacity-0 group-hover:opacity-100 active:scale-95 self-center"
-                  aria-label={`Delete ${item.title}`}>
-                  <Trash2 className="w-3.5 h-3.5" />
+                <button
+                  onClick={() => toggleStar(item.id)}
+                  className="flex-shrink-0 p-1.5 rounded-lg transition-all active:scale-95 self-center"
+                  aria-label={`Star ${item.title}`}
+                >
+                  <Star className={`w-3.5 h-3.5 transition-colors ${starred.has(item.id) ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-700 hover:text-yellow-400'}`} />
                 </button>
               </div>
             ))}
@@ -794,16 +798,15 @@ export default function CategoryDetail({
                   <div className="absolute top-1 left-1 bg-black/70 rounded-md px-1.5 py-0.5 text-[9px] text-zinc-300 font-mono backdrop-blur-sm">
                     {getLabel(i, sortedItems.length)}
                   </div>
-                  {/* Delete overlay */}
+                  {/* Star */}
                   <button
-                    onClick={() => setDeleteTarget(item)}
-                    className="absolute top-1 right-1 p-1 rounded-md bg-black/60 text-zinc-400 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100 active:scale-95 backdrop-blur-sm"
-                    aria-label={`Delete ${item.title}`}
+                    onClick={() => toggleStar(item.id)}
+                    className="absolute top-1 right-1 p-1 rounded-md bg-black/50 backdrop-blur-sm transition-all z-10"
+                    aria-label={`Star ${item.title}`}
                   >
-                    <Trash2 className="w-3 h-3" />
+                    <Star className={`w-3 h-3 transition-colors ${starred.has(item.id) ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-500'}`} />
                   </button>
                 </div>
-                {/* Title */}
                 <p className="text-zinc-300 text-[11px] mt-1.5 leading-tight line-clamp-2 px-0.5">{item.title}</p>
               </div>
             ))}
