@@ -19,9 +19,12 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import Image from 'next/image';
 import { ArrowLeft, Pencil, Check, Trash2, X, GripVertical } from 'lucide-react';
 import { Category, CategoryConfig, ListItem } from '@/types';
 import { getCategoryConfig, sortItems } from '@/utils/helpers';
+
+const TMDB_IMG = 'https://image.tmdb.org/t/p/w92';
 import SortBar, { SortOption } from '@/components/SortBar';
 import EmptyState from '@/components/EmptyState';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
@@ -266,15 +269,31 @@ export default function CategoryDetail({
           {sortedItems.map((item, i) => (
             <div
               key={item.id}
-              className="group flex items-baseline gap-3 py-2.5 border-b border-zinc-800/50 last:border-0 hover:bg-zinc-900/40 px-1 rounded-lg transition-colors"
+              className="group flex items-center gap-3 py-2 border-b border-zinc-800/50 last:border-0 hover:bg-zinc-900/40 px-1 rounded-lg transition-colors"
             >
-              <span className="text-zinc-600 text-xs tabular-nums font-mono flex-shrink-0 w-7 text-right">
-                {i + 1}.
-              </span>
-              <span className="text-zinc-200 text-sm flex-1 min-w-0">{item.title}</span>
+              {/* Poster thumbnail */}
+              {item.posterPath ? (
+                <Image
+                  src={`${TMDB_IMG}${item.posterPath}`}
+                  alt={item.title}
+                  width={28}
+                  height={42}
+                  className="rounded-md object-cover flex-shrink-0"
+                />
+              ) : (
+                <span className="text-zinc-600 text-xs tabular-nums font-mono flex-shrink-0 w-7 text-right self-center">
+                  {i + 1}.
+                </span>
+              )}
+              {item.posterPath && (
+                <span className="text-zinc-600 text-xs tabular-nums font-mono flex-shrink-0 w-5 text-right self-center">
+                  {i + 1}.
+                </span>
+              )}
+              <span className="text-zinc-200 text-sm flex-1 min-w-0 self-center">{item.title}</span>
               <button
                 onClick={() => setDeleteTarget(item)}
-                className="flex-shrink-0 p-1.5 rounded-lg text-zinc-800 hover:text-red-400 hover:bg-red-400/10 transition-all opacity-0 group-hover:opacity-100 active:scale-95"
+                className="flex-shrink-0 p-1.5 rounded-lg text-zinc-800 hover:text-red-400 hover:bg-red-400/10 transition-all opacity-0 group-hover:opacity-100 active:scale-95 self-center"
                 aria-label={`Delete ${item.title}`}
               >
                 <Trash2 className="w-3.5 h-3.5" />

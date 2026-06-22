@@ -1,8 +1,11 @@
 'use client';
 
+import Image from 'next/image';
 import { ChevronRight } from 'lucide-react';
-import { ListItem } from '@/types';
-import { CategoryConfig } from '@/types';
+import { ListItem, CategoryConfig } from '@/types';
+
+const TMDB_IMG = 'https://image.tmdb.org/t/p/w185';
+const PREVIEW = 4;
 
 interface CategoryCardProps {
   config: CategoryConfig;
@@ -10,16 +13,16 @@ interface CategoryCardProps {
   onClick: () => void;
 }
 
-const PREVIEW = 4;
-
 export default function CategoryCard({ config, items, onClick }: CategoryCardProps) {
   const preview = items.slice(0, PREVIEW);
   const remaining = items.length - PREVIEW;
+  const posterItems = preview.filter((i) => i.posterPath);
+  const showPosters = posterItems.length >= 2;
 
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-2xl p-4 transition-all duration-200 hover:bg-zinc-800/60 active:scale-[0.98] group flex flex-col`}
+      className="w-full text-left bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-2xl p-4 transition-all duration-200 hover:bg-zinc-800/60 active:scale-[0.98] group flex flex-col"
     >
       {/* Card header */}
       <div className="flex items-start justify-between mb-3">
@@ -39,10 +42,31 @@ export default function CategoryCard({ config, items, onClick }: CategoryCardPro
         <ChevronRight className="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 transition-colors flex-shrink-0 mt-0.5" />
       </div>
 
-      {/* Preview list */}
+      {/* Content preview */}
       {items.length === 0 ? (
         <p className="text-zinc-700 text-xs italic">Nothing added yet</p>
+      ) : showPosters ? (
+        /* Poster strip */
+        <div className="flex gap-1.5 items-end">
+          {posterItems.slice(0, 4).map((item) => (
+            <div key={item.id} className="relative flex-shrink-0">
+              <Image
+                src={`${TMDB_IMG}${item.posterPath}`}
+                alt={item.title}
+                width={48}
+                height={72}
+                className="rounded-lg object-cover"
+              />
+            </div>
+          ))}
+          {remaining > 0 && (
+            <div className="w-12 h-[72px] rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center flex-shrink-0">
+              <span className="text-zinc-500 text-[10px] font-semibold">+{remaining}</span>
+            </div>
+          )}
+        </div>
       ) : (
+        /* Text list */
         <div className="space-y-1.5 min-w-0">
           {preview.map((item, i) => (
             <div key={item.id} className="flex items-baseline gap-1.5 min-w-0">

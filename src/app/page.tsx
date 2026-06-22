@@ -222,7 +222,7 @@ export default function Home() {
         <AddModal
           defaultCategory={defaultAddCategory}
           categories={allCategories}
-          onAdd={(title, category) => addItem(title, category)}
+          onAdd={(title, category, posterPath) => addItem(title, category, posterPath)}
           onClose={() => setShowAdd(false)}
         />
       )}

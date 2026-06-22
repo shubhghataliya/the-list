@@ -5,6 +5,7 @@ export interface ListItem {
   title: string;
   category: Category;
   addedAt: number;
+  posterPath?: string;
 }
 
 export type ListData = Record<string, ListItem[]>;

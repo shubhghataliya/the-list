@@ -12,10 +12,17 @@ interface DbRow {
   category: string;
   added_at: number;
   position: number | null;
+  poster_path: string | null;
 }
 
 function toListItem(row: DbRow): ListItem {
-  return { id: row.id, title: row.title, category: row.category, addedAt: row.added_at };
+  return {
+    id: row.id,
+    title: row.title,
+    category: row.category,
+    addedAt: row.added_at,
+    posterPath: row.poster_path ?? undefined,
+  };
 }
 
 function buildData(rows: DbRow[]): ListData {
@@ -62,11 +69,12 @@ export function useListData(userId: string | undefined) {
     return () => { supabase.removeChannel(channel); };
   }, [userId, fetchData]);
 
-  const addItem = useCallback(async (title: string, category: Category) => {
-    const item: ListItem = { id: generateId(), title, category, addedAt: Date.now() };
+  const addItem = useCallback(async (title: string, category: Category, posterPath?: string) => {
+    const item: ListItem = { id: generateId(), title, category, addedAt: Date.now(), posterPath };
     setData((prev) => ({ ...prev, [category]: [item, ...(prev[category] ?? [])] }));
     await supabase.from('list_items').insert({
-      id: item.id, user_id: userId, title, category, added_at: item.addedAt, position: null,
+      id: item.id, user_id: userId, title, category, added_at: item.addedAt,
+      position: null, poster_path: posterPath ?? null,
     });
   }, [userId]);
 
@@ -77,7 +85,7 @@ export function useListData(userId: string | undefined) {
     }));
     setData((prev) => ({ ...prev, [category]: [...items, ...(prev[category] ?? [])] }));
     await supabase.from('list_items').insert(
-      items.map((item) => ({ id: item.id, user_id: userId, title: item.title, category, added_at: item.addedAt, position: null }))
+      items.map((item) => ({ id: item.id, user_id: userId, title: item.title, category, added_at: item.addedAt, position: null, poster_path: null }))
     );
   }, [userId]);
 
@@ -86,7 +94,10 @@ export function useListData(userId: string | undefined) {
     await supabase.from('list_items').delete().eq('user_id', userId).eq('category', category);
     if (items.length > 0) {
       await supabase.from('list_items').insert(
-        items.map((item, i) => ({ id: item.id, user_id: userId, title: item.title, category, added_at: item.addedAt, position: i }))
+        items.map((item, i) => ({
+          id: item.id, user_id: userId, title: item.title, category,
+          added_at: item.addedAt, position: i, poster_path: item.posterPath ?? null,
+        }))
       );
     }
   }, [userId]);
@@ -102,7 +113,10 @@ export function useListData(userId: string | undefined) {
     const all = Object.values(importedData).flat();
     if (all.length > 0) {
       await supabase.from('list_items').insert(
-        all.map((item) => ({ id: item.id, user_id: userId, title: item.title, category: item.category, added_at: item.addedAt, position: null }))
+        all.map((item) => ({
+          id: item.id, user_id: userId, title: item.title, category: item.category,
+          added_at: item.addedAt, position: null, poster_path: item.posterPath ?? null,
+        }))
       );
     }
   }, [userId]);
