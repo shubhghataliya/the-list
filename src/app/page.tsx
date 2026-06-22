@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { Loader2, Tv, Film } from 'lucide-react';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { Loader2, Film } from 'lucide-react';
 import { Category, ListItem } from '@/types';
 import { CATEGORIES, getTotalCount, getTypeCount } from '@/utils/helpers';
+import { getRank, getNextRank, RANKS } from '@/utils/ranks';
 import { useAuth } from '@/hooks/useAuth';
 import { useListData } from '@/hooks/useListData';
 import { useCustomCategories } from '@/hooks/useCustomCategories';
@@ -19,6 +20,8 @@ import TextImportModal from '@/components/TextImportModal';
 import EmptyState from '@/components/EmptyState';
 import BurgerMenu, { ProfileSheet } from '@/components/BurgerMenu';
 import NewCategoryModal from '@/components/NewCategoryModal';
+import RankRoadmapModal from '@/components/RankRoadmapModal';
+import RankCelebrationModal from '@/components/RankCelebrationModal';
 
 type View = 'home' | Category;
 
@@ -41,9 +44,32 @@ export default function Home() {
   const [showData, setShowData] = useState(false);
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showRoadmap, setShowRoadmap] = useState(false);
+  const [celebrationRank, setCelebrationRank] = useState<ReturnType<typeof getRank> | null>(null);
 
   const totalCount = useMemo(() => getTotalCount(data), [data]);
   const moviesCount = useMemo(() => getTypeCount(data, 'movies', allCategories), [data, allCategories]);
+  const seriesCount = useMemo(() => getTypeCount(data, 'series', allCategories), [data, allCategories]);
+  const currentRank = useMemo(() => getRank(seriesCount), [seriesCount]);
+  const nextRank = useMemo(() => getNextRank(seriesCount), [seriesCount]);
+
+  const prevRankRef = useRef<string | null>(null);
+  const dataLoadedRef = useRef(false);
+  useEffect(() => {
+    if (dataLoading) return;
+    const rankName = getRank(seriesCount).name;
+    if (!dataLoadedRef.current) {
+      dataLoadedRef.current = true;
+      prevRankRef.current = rankName;
+      return;
+    }
+    if (prevRankRef.current && rankName !== prevRankRef.current) {
+      const prevIdx = RANKS.findIndex((r) => r.name === prevRankRef.current);
+      const currIdx = RANKS.findIndex((r) => r.name === rankName);
+      if (currIdx > prevIdx) setCelebrationRank(getRank(seriesCount));
+    }
+    prevRankRef.current = rankName;
+  }, [seriesCount, dataLoading]);
 
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
@@ -104,10 +130,16 @@ export default function Home() {
               <div className="flex items-center gap-2">
                 {/* Stats */}
                 <div className="flex items-center gap-1.5">
-                  <div className="flex items-center gap-1 bg-violet-500/10 border border-violet-500/20 rounded-full px-2.5 py-1">
-                    <Tv className="w-3 h-3 text-violet-400" />
-                    <span className="text-violet-300 font-bold text-sm tabular-nums">{totalCount}</span>
-                  </div>
+                  <button
+                    onClick={() => setShowRoadmap(true)}
+                    className={`flex items-center gap-1.5 border rounded-full px-2.5 py-1 hover:opacity-80 transition-opacity ${currentRank.bgClass} ${currentRank.borderClass}`}
+                  >
+                    <span className="text-sm leading-none">{currentRank.badge}</span>
+                    <span className={`font-bold text-sm tabular-nums ${currentRank.textClass}`}>{seriesCount}</span>
+                    {nextRank && (
+                      <span className="text-zinc-600 text-xs tabular-nums">/{nextRank.min}</span>
+                    )}
+                  </button>
                   {moviesCount > 0 && (
                     <div className="flex items-center gap-1 bg-blue-500/10 border border-blue-500/20 rounded-full px-2.5 py-1">
                       <Film className="w-3 h-3 text-blue-400" />
@@ -247,6 +279,14 @@ export default function Home() {
           onSignOut={signOut}
           onClose={() => setShowProfile(false)}
         />
+      )}
+
+      {showRoadmap && (
+        <RankRoadmapModal seriesCount={seriesCount} onClose={() => setShowRoadmap(false)} />
+      )}
+
+      {celebrationRank && (
+        <RankCelebrationModal rank={celebrationRank} onClose={() => setCelebrationRank(null)} />
       )}
     </main>
   );
