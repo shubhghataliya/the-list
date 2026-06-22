@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   DndContext,
   closestCenter,
@@ -62,6 +63,11 @@ function SortableRow({ item, index, onUpdateTitle, onUpdatePoster, onRemove }: S
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<TMDBResult[]>([]);
   const rowDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (showSearch) searchInputRef.current?.focus({ preventScroll: true });
+  }, [showSearch]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -172,7 +178,7 @@ function SortableRow({ item, index, onUpdateTitle, onUpdatePoster, onRemove }: S
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && runSearch()}
               placeholder="Search TMDB…"
-              autoFocus
+              ref={searchInputRef}
               className="flex-1 bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-1.5 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-violet-500/50 text-xs"
             />
             <button
@@ -349,6 +355,7 @@ export default function CategoryDetail({
   const enterEdit = () => {
     setEditItems([...items]);
     setEditMode(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const cancelEdit = () => {
@@ -398,7 +405,12 @@ export default function CategoryDetail({
     setPickerSearching(false);
   };
 
+  const pickerInputRef = useRef<HTMLInputElement>(null);
   const pickerDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (posterPickerId) pickerInputRef.current?.focus({ preventScroll: true });
+  }, [posterPickerId]);
   useEffect(() => {
     if (!posterPickerId || !pickerQuery.trim()) return;
     if (pickerDebounceRef.current) clearTimeout(pickerDebounceRef.current);
@@ -648,8 +660,8 @@ export default function CategoryDetail({
           </DndContext>
 
           {/* ── Poster picker modal (grid edit mode) ── */}
-          {posterPickerId && (
-            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-4 animate-fade-in"
+          {posterPickerId && createPortal(
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-4"
               onClick={() => { setPosterPickerId(null); setPickerResults([]); }}>
               <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 w-full max-w-sm shadow-2xl animate-slide-up sm:animate-scale-in flex flex-col max-h-[80vh]"
                 onClick={(e) => e.stopPropagation()}>
@@ -666,7 +678,7 @@ export default function CategoryDetail({
                     onChange={(e) => setPickerQuery(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && runPickerSearch()}
                     placeholder="Search TMDB…"
-                    autoFocus
+                    ref={pickerInputRef}
                     className="flex-1 bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2.5 text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-violet-500/50 text-sm"
                   />
                   <button onClick={() => runPickerSearch()} disabled={pickerSearching}
@@ -707,7 +719,7 @@ export default function CategoryDetail({
                 )}
               </div>
             </div>
-          )}
+          , document.body)}
         </>
       ) : (
         /* ══════════════════════════════════
@@ -799,20 +811,22 @@ export default function CategoryDetail({
         )
       )}
 
-      {deleteTarget && (
+      {deleteTarget && createPortal(
         <DeleteConfirmModal
           title={deleteTarget.title}
           onConfirm={handleDeleteConfirm}
           onCancel={() => setDeleteTarget(null)}
-        />
+        />,
+        document.body
       )}
 
-      {showExport && (
+      {showExport && createPortal(
         <ExportModal
           config={config}
           items={sortedItems}
           onClose={() => setShowExport(false)}
-        />
+        />,
+        document.body
       )}
     </div>
   );
