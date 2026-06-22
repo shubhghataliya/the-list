@@ -78,14 +78,14 @@ export function useListData(userId: string | undefined) {
     });
   }, [userId]);
 
-  const addBulk = useCallback(async (titles: string[], category: Category) => {
+  const addBulk = useCallback(async (entries: Array<{ title: string; posterPath?: string }>, category: Category) => {
     const now = Date.now();
-    const items: ListItem[] = titles.map((title, i) => ({
-      id: generateId(), title, category, addedAt: now + i,
+    const items: ListItem[] = entries.map((e, i) => ({
+      id: generateId(), title: e.title, category, addedAt: now + i, posterPath: e.posterPath,
     }));
     setData((prev) => ({ ...prev, [category]: [...items, ...(prev[category] ?? [])] }));
     await supabase.from('list_items').insert(
-      items.map((item) => ({ id: item.id, user_id: userId, title: item.title, category, added_at: item.addedAt, position: null, poster_path: null }))
+      items.map((item) => ({ id: item.id, user_id: userId, title: item.title, category, added_at: item.addedAt, position: null, poster_path: item.posterPath ?? null }))
     );
   }, [userId]);
 
@@ -101,6 +101,22 @@ export function useListData(userId: string | undefined) {
       );
     }
   }, [userId]);
+
+  const updatePoster = useCallback(async (id: string, posterPath: string) => {
+    setData((prev) => {
+      const next = { ...prev };
+      for (const cat of Object.keys(next)) {
+        const idx = next[cat].findIndex((i) => i.id === id);
+        if (idx !== -1) {
+          next[cat] = [...next[cat]];
+          next[cat][idx] = { ...next[cat][idx], posterPath };
+          break;
+        }
+      }
+      return next;
+    });
+    await supabase.from('list_items').update({ poster_path: posterPath }).eq('id', id);
+  }, []);
 
   const deleteItem = useCallback(async (id: string, category: Category) => {
     setData((prev) => ({ ...prev, [category]: (prev[category] ?? []).filter((i) => i.id !== id) }));
@@ -121,5 +137,5 @@ export function useListData(userId: string | undefined) {
     }
   }, [userId]);
 
-  return { data, loading, addItem, addBulk, updateCategory, deleteItem, importAll };
+  return { data, loading, addItem, addBulk, updateCategory, deleteItem, updatePoster, importAll };
 }

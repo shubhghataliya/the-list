@@ -20,14 +20,16 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import Image from 'next/image';
-import { ArrowLeft, Pencil, Check, Trash2, X, GripVertical } from 'lucide-react';
+import { ArrowLeft, Pencil, Check, Trash2, X, GripVertical, ImageIcon, Loader2 } from 'lucide-react';
 import { Category, CategoryConfig, ListItem } from '@/types';
 import { getCategoryConfig, sortItems } from '@/utils/helpers';
-
-const TMDB_IMG = 'https://image.tmdb.org/t/p/w92';
 import SortBar, { SortOption } from '@/components/SortBar';
 import EmptyState from '@/components/EmptyState';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
+
+const TMDB_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+const TMDB_IMG = 'https://image.tmdb.org/t/p/w92';
+const TMDB_IMG_MD = 'https://image.tmdb.org/t/p/w185';
 
 /* ── Draggable edit row ───────────────────────────────────── */
 interface SortableRowProps {
@@ -100,6 +102,7 @@ interface CategoryDetailProps {
   onBack: () => void;
   onUpdateItems: (category: Category, items: ListItem[]) => void;
   onDeleteItem?: (id: string, category: Category) => void;
+  onUpdatePoster?: (id: string, posterPath: string) => void;
 }
 
 export default function CategoryDetail({
@@ -109,12 +112,15 @@ export default function CategoryDetail({
   onBack,
   onUpdateItems,
   onDeleteItem,
+  onUpdatePoster,
 }: CategoryDetailProps) {
   const config = getCategoryConfig(category, allCategories);
   const [editMode, setEditMode] = useState(false);
   const [editItems, setEditItems] = useState<ListItem[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [deleteTarget, setDeleteTarget] = useState<ListItem | null>(null);
+  const [fetchingPosters, setFetchingPosters] = useState(false);
+  const [posterProgress, setPosterProgress] = useState({ done: 0, total: 0 });
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -168,6 +174,32 @@ export default function CategoryDetail({
   };
 
   const sortedItems = useMemo(() => sortItems(items, sortBy), [items, sortBy]);
+  const missingPosters = items.filter((i) => !i.posterPath);
+
+  const fetchMissingPosters = async () => {
+    if (!onUpdatePoster || missingPosters.length === 0 || fetchingPosters) return;
+    setFetchingPosters(true);
+    setPosterProgress({ done: 0, total: missingPosters.length });
+
+    for (let i = 0; i < missingPosters.length; i++) {
+      const item = missingPosters[i];
+      try {
+        const res = await fetch(
+          `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&query=${encodeURIComponent(item.title)}&include_adult=false`
+        );
+        const data = await res.json();
+        const match = ((data.results ?? []) as Array<{ media_type: string; poster_path: string | null }>)
+          .find((r) => (r.media_type === 'movie' || r.media_type === 'tv') && r.poster_path);
+        if (match?.poster_path) {
+          await onUpdatePoster(item.id, match.poster_path);
+        }
+      } catch {}
+      setPosterProgress({ done: i + 1, total: missingPosters.length });
+      await new Promise((r) => setTimeout(r, 120));
+    }
+
+    setFetchingPosters(false);
+  };
 
   return (
     <div className="animate-fade-in">
@@ -185,22 +217,50 @@ export default function CategoryDetail({
         </button>
 
         {editMode ? (
-          <button
-            onClick={saveEdit}
-            className="flex items-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 rounded-xl px-4 py-2 text-sm font-semibold transition-all active:scale-[0.98]"
-          >
-            <Check className="w-3.5 h-3.5" />
-            Save
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setEditItems([])}
+              disabled={editItems.length === 0}
+              className="flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 disabled:opacity-30 disabled:cursor-not-allowed text-red-400 border border-red-500/20 rounded-xl px-3 py-2 text-xs font-medium transition-all active:scale-[0.98]"
+              title="Delete all items"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              All
+            </button>
+            <button
+              onClick={saveEdit}
+              className="flex items-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 rounded-xl px-4 py-2 text-sm font-semibold transition-all active:scale-[0.98]"
+            >
+              <Check className="w-3.5 h-3.5" />
+              Save
+            </button>
+          </div>
         ) : (
-          <button
-            onClick={enterEdit}
-            disabled={items.length === 0}
-            className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-300 border border-zinc-700 hover:border-zinc-600 rounded-xl px-4 py-2 text-sm font-medium transition-all active:scale-[0.98]"
-          >
-            <Pencil className="w-3.5 h-3.5" />
-            Edit
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Fetch Posters button */}
+            {onUpdatePoster && missingPosters.length > 0 && items.length > 0 && (
+              <button
+                onClick={fetchMissingPosters}
+                disabled={fetchingPosters}
+                className="flex items-center gap-1.5 bg-violet-500/10 hover:bg-violet-500/20 disabled:opacity-60 text-violet-400 border border-violet-500/20 rounded-xl px-3 py-2 text-xs font-medium transition-all active:scale-[0.98]"
+                title={`Fetch posters for ${missingPosters.length} item${missingPosters.length !== 1 ? 's' : ''}`}
+              >
+                {fetchingPosters ? (
+                  <><Loader2 className="w-3.5 h-3.5 animate-spin" />{posterProgress.done}/{posterProgress.total}</>
+                ) : (
+                  <><ImageIcon className="w-3.5 h-3.5" />{missingPosters.length}</>
+                )}
+              </button>
+            )}
+            <button
+              onClick={enterEdit}
+              disabled={items.length === 0}
+              className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-300 border border-zinc-700 hover:border-zinc-600 rounded-xl px-4 py-2 text-sm font-medium transition-all active:scale-[0.98]"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              Edit
+            </button>
+          </div>
         )}
       </div>
 

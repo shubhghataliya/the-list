@@ -26,7 +26,7 @@ export default function Home() {
   const { session, loading: authLoading, signOut } = useAuth();
   const userId = session?.user?.id;
 
-  const { data, loading: dataLoading, addItem, addBulk, updateCategory, deleteItem, importAll } =
+  const { data, loading: dataLoading, addItem, addBulk, updateCategory, deleteItem, updatePoster, importAll } =
     useListData(userId);
 
   const { customCategories, addCustomCategory } = useCustomCategories();
@@ -212,6 +212,7 @@ export default function Home() {
             onBack={() => setView('home')}
             onUpdateItems={updateCategory}
             onDeleteItem={deleteItem}
+            onUpdatePoster={updatePoster}
           />
         )}
       </div>
@@ -229,7 +230,7 @@ export default function Home() {
 
       {showTextImport && (
         <TextImportModal
-          activeCategory="tv-series"
+          activeCategory={view === 'home' ? 'tv-series' : (view as Category)}
           onImport={addBulk}
           onClose={() => setShowTextImport(false)}
         />
