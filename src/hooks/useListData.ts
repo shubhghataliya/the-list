@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Category, ListData, ListItem } from '@/types';
 import { INITIAL_DATA, generateId } from '@/utils/helpers';
@@ -26,7 +26,9 @@ function toListItem(row: DbRow): ListItem {
 }
 
 function buildData(rows: DbRow[]): ListData {
-  const data: ListData = { ...INITIAL_DATA };
+  // Deep-copy initial keys so we never mutate the INITIAL_DATA arrays
+  const data: ListData = {};
+  for (const key of Object.keys(INITIAL_DATA)) data[key] = [];
 
   const sorted = [...rows].sort((a, b) => {
     if (a.position === null && b.position === null) return b.added_at - a.added_at;
@@ -46,6 +48,9 @@ function buildData(rows: DbRow[]): ListData {
 export function useListData(userId: string | undefined) {
   const [data, setData] = useState<ListData>(INITIAL_DATA);
   const [loading, setLoading] = useState(true);
+  // Blocks realtime refetches while a save is in progress to prevent
+  // DELETE events from overwriting the optimistic state before INSERT completes.
+  const isSavingRef = useRef(false);
 
   const fetchData = useCallback(async () => {
     if (!userId) { setData(INITIAL_DATA); setLoading(false); return; }
@@ -63,7 +68,9 @@ export function useListData(userId: string | undefined) {
 
     const channel = supabase
       .channel(`list-${userId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'list_items', filter: `user_id=eq.${userId}` }, fetchData)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'list_items', filter: `user_id=eq.${userId}` }, () => {
+        if (!isSavingRef.current) fetchData();
+      })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -89,18 +96,47 @@ export function useListData(userId: string | undefined) {
     );
   }, [userId]);
 
-  const updateCategory = useCallback(async (category: Category, items: ListItem[]) => {
+  const updateCategory = useCallback(async (category: Category, items: ListItem[], originalItemIds?: Set<string>) => {
     setData((prev) => ({ ...prev, [category]: items }));
-    await supabase.from('list_items').delete().eq('user_id', userId).eq('category', category);
-    if (items.length > 0) {
-      await supabase.from('list_items').insert(
-        items.map((item, i) => ({
-          id: item.id, user_id: userId, title: item.title, category,
-          added_at: item.addedAt, position: i, poster_path: item.posterPath ?? null,
-        }))
-      );
+    isSavingRef.current = true;
+
+    try {
+      if (originalItemIds) {
+        const newIds = new Set(items.map((i) => i.id));
+        const removed = Array.from(originalItemIds).filter((id) => !newIds.has(id));
+
+        // Upsert FIRST so items are never absent from DB (safe ordering)
+        if (items.length > 0) {
+          await supabase.from('list_items').upsert(
+            items.map((item, i) => ({
+              id: item.id, user_id: userId, title: item.title, category,
+              added_at: item.addedAt, position: i, poster_path: item.posterPath ?? null,
+            })),
+            { onConflict: 'id' }
+          );
+        }
+        // Then delete only the items the user explicitly removed
+        if (removed.length > 0) {
+          await supabase.from('list_items').delete().in('id', removed);
+        }
+      } else {
+        // Fallback: full replace
+        await supabase.from('list_items').delete().eq('user_id', userId).eq('category', category);
+        if (items.length > 0) {
+          await supabase.from('list_items').insert(
+            items.map((item, i) => ({
+              id: item.id, user_id: userId, title: item.title, category,
+              added_at: item.addedAt, position: i, poster_path: item.posterPath ?? null,
+            }))
+          );
+        }
+      }
+    } finally {
+      isSavingRef.current = false;
+      // One authoritative fetch after all writes complete
+      await fetchData();
     }
-  }, [userId]);
+  }, [userId, fetchData]);
 
   const updatePoster = useCallback(async (id: string, posterPath: string) => {
     setData((prev) => {

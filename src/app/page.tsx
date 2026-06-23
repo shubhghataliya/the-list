@@ -238,6 +238,7 @@ export default function Home() {
             allCategories={allCategories}
             onBack={() => setView('home')}
             onUpdateItems={updateCategory}
+            onAddBulk={addBulk}
             onDeleteItem={deleteItem}
             onUpdatePoster={updatePoster}
             onRenameCategory={renameCustomCategory}

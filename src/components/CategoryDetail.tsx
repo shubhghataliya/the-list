@@ -22,7 +22,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import Image from 'next/image';
-import { ArrowLeft, Pencil, Check, Trash2, X, GripVertical, ImageIcon, Loader2, List, LayoutGrid, Grid2X2, Search, Film, ImageOff, Download, Star } from 'lucide-react';
+import { ArrowLeft, Pencil, Check, Trash2, X, GripVertical, ImageIcon, Loader2, List, LayoutGrid, Grid2X2, Search, Film, ImageOff, Download, Upload, Star } from 'lucide-react';
 import { Category, CategoryConfig, ListItem } from '@/types';
 import { getCategoryConfig, sortItems } from '@/utils/helpers';
 import { useStarred } from '@/hooks/useStarred';
@@ -315,7 +315,8 @@ interface CategoryDetailProps {
   items: ListItem[];
   allCategories: CategoryConfig[];
   onBack: () => void;
-  onUpdateItems: (category: Category, items: ListItem[]) => void;
+  onUpdateItems: (category: Category, items: ListItem[], originalItemIds?: Set<string>) => void;
+  onAddBulk?: (entries: Array<{ title: string; posterPath?: string }>, category: Category) => void;
   onDeleteItem?: (id: string, category: Category) => void;
   onUpdatePoster?: (id: string, posterPath: string) => void;
   onRenameCategory?: (id: string, newLabel: string) => void;
@@ -327,6 +328,7 @@ export default function CategoryDetail({
   allCategories,
   onBack,
   onUpdateItems,
+  onAddBulk,
   onDeleteItem,
   onUpdatePoster,
   onRenameCategory,
@@ -335,6 +337,7 @@ export default function CategoryDetail({
   const { starred, toggleStar } = useStarred();
   const [editMode, setEditMode] = useState(false);
   const [editItems, setEditItems] = useState<ListItem[]>([]);
+  const [originalItemIds, setOriginalItemIds] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [deleteTarget, setDeleteTarget] = useState<ListItem | null>(null);
   const [showDeleteAll, setShowDeleteAll] = useState(false);
@@ -356,7 +359,9 @@ export default function CategoryDetail({
   );
 
   const enterEdit = () => {
-    setEditItems(sortItems([...items], sortBy));
+    const sorted = sortItems([...items], sortBy);
+    setEditItems(sorted);
+    setOriginalItemIds(new Set(sorted.map((i) => i.id)));
     setEditMode(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -364,16 +369,18 @@ export default function CategoryDetail({
   const cancelEdit = () => {
     setEditMode(false);
     setEditItems([]);
+    setOriginalItemIds(new Set());
     setCategoryLabel(config.label);
   };
 
   const saveEdit = () => {
-    onUpdateItems(category, editItems.filter((i) => i.title.trim() !== ''));
+    onUpdateItems(category, editItems.filter((i) => i.title.trim() !== ''), originalItemIds);
     if (isCustom && categoryLabel.trim() && categoryLabel.trim() !== config.label) {
       onRenameCategory?.(category, categoryLabel.trim());
     }
     setEditMode(false);
     setEditItems([]);
+    setOriginalItemIds(new Set());
   };
 
   const updateTitle = (id: string, value: string) => {
@@ -410,6 +417,45 @@ export default function CategoryDetail({
 
   const pickerInputRef = useRef<HTMLInputElement>(null);
   const pickerDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const jsonImportRef = useRef<HTMLInputElement>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+
+  const handleJsonImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !onAddBulk) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const parsed = JSON.parse(ev.target?.result as string);
+        let entries: Array<{ title: string; posterPath?: string }> = [];
+
+        if (Array.isArray(parsed)) {
+          // Simple array: ["Title"] or [{title, posterPath?}]
+          entries = parsed.flatMap((item) => {
+            if (typeof item === 'string' && item.trim()) return [{ title: item.trim() }];
+            if (typeof item === 'object' && item !== null && typeof item.title === 'string' && item.title.trim())
+              return [{ title: item.title.trim(), posterPath: item.posterPath ?? undefined }];
+            return [];
+          });
+        } else if (typeof parsed === 'object' && parsed !== null && Array.isArray(parsed.items)) {
+          // Per-category export format: { category, items: [{title, posterPath?}] }
+          entries = (parsed.items as unknown[]).flatMap((item) => {
+            if (typeof item === 'object' && item !== null && typeof (item as {title: string}).title === 'string')
+              return [{ title: (item as {title: string; posterPath?: string}).title.trim(), posterPath: (item as {posterPath?: string}).posterPath ?? undefined }];
+            return [];
+          });
+        }
+
+        if (entries.length === 0) { setImportError('No valid titles found in file.'); return; }
+        onAddBulk(entries, category);
+        setImportError(null);
+      } catch {
+        setImportError('Invalid JSON file.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
 
   useEffect(() => {
     if (posterPickerId) pickerInputRef.current?.focus({ preventScroll: true });
@@ -529,6 +575,18 @@ export default function CategoryDetail({
                 )}
               </button>
             )}
+            {onAddBulk && (
+              <>
+                <button
+                  onClick={() => { setImportError(null); jsonImportRef.current?.click(); }}
+                  className="p-2 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 rounded-xl transition-all"
+                  title="Import JSON into this category"
+                >
+                  <Upload className="w-4 h-4" />
+                </button>
+                <input ref={jsonImportRef} type="file" accept=".json,application/json" onChange={handleJsonImport} className="hidden" />
+              </>
+            )}
             <button
               onClick={() => setShowExport(true)}
               disabled={items.length === 0}
@@ -572,6 +630,14 @@ export default function CategoryDetail({
           </p>
         </div>
       </div>
+
+      {/* ── Import error ── */}
+      {importError && (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5 mb-4 flex items-center justify-between gap-2 animate-fade-in">
+          <p className="text-red-400 text-xs">{importError}</p>
+          <button onClick={() => setImportError(null)} className="text-red-400/60 hover:text-red-400"><X className="w-3.5 h-3.5" /></button>
+        </div>
+      )}
 
       {/* ── Edit mode hint ── */}
       {editMode && (
