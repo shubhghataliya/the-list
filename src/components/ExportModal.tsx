@@ -15,9 +15,12 @@ type Format = 'json' | 'text';
 export default function ExportModal({ config, items, onClose }: ExportModalProps) {
   const [format, setFormat] = useState<Format>('text');
   const [includeDate, setIncludeDate] = useState(false);
+  const [includePoster, setIncludePoster] = useState(true);
 
   const formatDate = (ts: number) =>
     new Date(ts).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  const exportItems = [...items].sort((a, b) => a.addedAt - b.addedAt);
 
   const download = () => {
     let content = '';
@@ -26,7 +29,7 @@ export default function ExportModal({ config, items, onClose }: ExportModalProps
 
     if (format === 'text') {
       const lines: string[] = [config.label.toUpperCase(), '', ''];
-      items.forEach((item, i) => {
+      exportItems.forEach((item, i) => {
         let line = `${i + 1}.${item.title}`;
         if (includeDate) line += `  — ${formatDate(item.addedAt)}`;
         lines.push(line);
@@ -35,8 +38,9 @@ export default function ExportModal({ config, items, onClose }: ExportModalProps
       filename = `${config.label.toLowerCase().replace(/\s+/g, '-')}.txt`;
       mime = 'text/plain';
     } else {
-      const data = items.map((item) => {
+      const data = exportItems.map((item) => {
         const obj: Record<string, unknown> = { title: item.title };
+        if (includePoster && item.posterPath) obj.posterPath = item.posterPath;
         if (includeDate) obj.addedAt = formatDate(item.addedAt);
         return obj;
       });
@@ -116,21 +120,24 @@ export default function ExportModal({ config, items, onClose }: ExportModalProps
             <div className="rounded-xl overflow-hidden">
               <Checkbox checked label="Name" onChange={() => {}} />
               <Checkbox checked={includeDate} label="Date added" onChange={() => setIncludeDate((v) => !v)} />
+              {format === 'json' && (
+                <Checkbox checked={includePoster} label="Poster (for re-import)" onChange={() => setIncludePoster((v) => !v)} />
+              )}
             </div>
           </div>
 
           {/* Preview — text only */}
-          {format === 'text' && items.length > 0 && (
+          {format === 'text' && exportItems.length > 0 && (
             <div className="bg-zinc-950 rounded-xl p-3 border border-zinc-800">
               <p className="text-zinc-600 text-[10px] mb-2 uppercase tracking-wider">Preview</p>
               <pre className="text-zinc-400 text-[11px] leading-relaxed font-mono whitespace-pre-wrap line-clamp-6">
                 {config.label.toUpperCase()}{'\n\n'}
-                {items.slice(0, 4).map((item, i) => {
+                {exportItems.slice(0, 4).map((item, i) => {
                   let line = `${i + 1}.${item.title}`;
                   if (includeDate) line += `  — ${formatDate(item.addedAt)}`;
                   return line;
                 }).join('\n')}
-                {items.length > 4 ? '\n…' : ''}
+                {exportItems.length > 4 ? '\n…' : ''}
               </pre>
             </div>
           )}
