@@ -48,7 +48,7 @@ export default function Home() {
   const [showProfile, setShowProfile] = useState(false);
   const [showRoadmap, setShowRoadmap] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const [leaderboardNew, setLeaderboardNew] = useState(() => !localStorage.getItem('the-list-lb-seen'));
+  const [leaderboardNew, setLeaderboardNew] = useState(false);
   const [celebrationRank, setCelebrationRank] = useState<ReturnType<typeof getRank> | null>(null);
 
   const totalCount = useMemo(() => getTotalCount(data), [data]);
@@ -66,6 +66,10 @@ export default function Home() {
   }, [data, allCategories]);
   const currentRank = useMemo(() => getRank(seriesCount), [seriesCount]);
   const nextRank = useMemo(() => getNextRank(seriesCount), [seriesCount]);
+
+  useEffect(() => {
+    if (!localStorage.getItem('the-list-lb-seen')) setLeaderboardNew(true);
+  }, []);
 
   useEffect(() => {
     if (dataLoading) return;
