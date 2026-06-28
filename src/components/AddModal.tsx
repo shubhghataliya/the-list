@@ -5,7 +5,6 @@ import { X, Plus, Search, Loader2, Film, Tv } from 'lucide-react';
 import Image from 'next/image';
 import { Category, CategoryConfig } from '@/types';
 
-const TMDB_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w185';
 
 interface TMDBResult {
@@ -49,9 +48,7 @@ export default function AddModal({ defaultCategory, categories, existingItems, o
     setSearching(true);
     timerRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&query=${encodeURIComponent(q)}&include_adult=false`
-        );
+        const res = await fetch(`/api/tmdb/search?q=${encodeURIComponent(q)}`);
         const data = await res.json();
         setResults(
           ((data.results ?? []) as TMDBResult[])
