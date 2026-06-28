@@ -362,9 +362,8 @@ export default function CategoryDetail({
   );
 
   const enterEdit = () => {
-    const sorted = sortItems([...items], sortBy);
-    setEditItems(sorted);
-    setOriginalItemIds(new Set(sorted.map((i) => i.id)));
+    setEditItems([...items]);
+    setOriginalItemIds(new Set(items.map((i) => i.id)));
     setEditMode(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };

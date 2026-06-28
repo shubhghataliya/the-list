@@ -31,9 +31,9 @@ function buildData(rows: DbRow[]): ListData {
   for (const key of Object.keys(INITIAL_DATA)) data[key] = [];
 
   const sorted = [...rows].sort((a, b) => {
-    if (a.position === null && b.position === null) return b.added_at - a.added_at;
-    if (a.position === null) return -1;
-    if (b.position === null) return 1;
+    if (a.position === null && b.position === null) return a.added_at - b.added_at;
+    if (a.position === null) return 1;
+    if (b.position === null) return -1;
     return a.position - b.position;
   });
 
@@ -78,7 +78,7 @@ export function useListData(userId: string | undefined) {
 
   const addItem = useCallback(async (title: string, category: Category, posterPath?: string) => {
     const item: ListItem = { id: generateId(), title, category, addedAt: Date.now(), posterPath };
-    setData((prev) => ({ ...prev, [category]: [item, ...(prev[category] ?? [])] }));
+    setData((prev) => ({ ...prev, [category]: [...(prev[category] ?? []), item] }));
     await supabase.from('list_items').insert({
       id: item.id, user_id: userId, title, category, added_at: item.addedAt,
       position: null, poster_path: posterPath ?? null,
@@ -90,7 +90,7 @@ export function useListData(userId: string | undefined) {
     const items: ListItem[] = entries.map((e, i) => ({
       id: generateId(), title: e.title, category, addedAt: now + i, posterPath: e.posterPath,
     }));
-    setData((prev) => ({ ...prev, [category]: [...items, ...(prev[category] ?? [])] }));
+    setData((prev) => ({ ...prev, [category]: [...(prev[category] ?? []), ...items] }));
     await supabase.from('list_items').insert(
       items.map((item) => ({ id: item.id, user_id: userId, title: item.title, category, added_at: item.addedAt, position: null, poster_path: item.posterPath ?? null }))
     );

@@ -69,6 +69,25 @@ export default function BurgerMenu({ onDataClick, onNewCategoryClick, onProfileC
   );
 }
 
+/* ── Reusable toggle row ── */
+function Toggle({ label, sub, value, loading, onToggle }: { label: string; sub: string; value: boolean; loading: boolean; onToggle: () => void }) {
+  return (
+    <div className="flex items-center justify-between bg-zinc-950 rounded-xl px-4 py-3">
+      <div>
+        <p className="text-zinc-200 text-sm font-medium">{label}</p>
+        <p className="text-zinc-600 text-[11px] mt-0.5">{sub}</p>
+      </div>
+      <button
+        onClick={onToggle}
+        disabled={loading}
+        className={`relative w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${value ? 'bg-violet-500' : 'bg-zinc-700'} ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+      >
+        <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${value ? 'translate-x-5' : 'translate-x-0'}`} />
+      </button>
+    </div>
+  );
+}
+
 /* ── Profile Sheet ── */
 interface ProfileSheetProps {
   email: string;
@@ -87,30 +106,41 @@ export function ProfileSheet({ email, createdAt, totalItems, userId, onSignOut, 
 
   const [isVip, setIsVip] = useState(false);
   const [onLeaderboard, setOnLeaderboard] = useState(true);
-  const [toggling, setToggling] = useState(false);
+  const [listPublic, setListPublic] = useState(true);
+  const [toggling, setToggling] = useState<'leaderboard' | 'list' | null>(null);
 
   useEffect(() => {
     if (!userId) return;
     supabase
       .from('profiles')
-      .select('is_vip, on_leaderboard')
+      .select('is_vip, on_leaderboard, list_public')
       .eq('id', userId)
       .single()
       .then(({ data }) => {
         if (data) {
           setIsVip(data.is_vip ?? false);
           setOnLeaderboard(data.on_leaderboard ?? true);
+          setListPublic(data.list_public ?? true);
         }
       });
   }, [userId]);
 
   const handleLeaderboardToggle = async () => {
     if (toggling) return;
-    setToggling(true);
+    setToggling('leaderboard');
     const next = !onLeaderboard;
     setOnLeaderboard(next);
     await supabase.rpc('toggle_leaderboard', { show_on_lb: next });
-    setToggling(false);
+    setToggling(null);
+  };
+
+  const handleListVisibilityToggle = async () => {
+    if (toggling) return;
+    setToggling('list');
+    const next = !listPublic;
+    setListPublic(next);
+    await supabase.rpc('toggle_list_visibility', { is_public: next });
+    setToggling(null);
   };
 
   return (
@@ -147,27 +177,23 @@ export function ProfileSheet({ email, createdAt, totalItems, userId, onSignOut, 
           </div>
         </div>
 
-        {/* VIP: Leaderboard toggle */}
+        {/* VIP toggles */}
         {isVip && (
-          <div className="flex items-center justify-between bg-zinc-950 rounded-xl px-4 py-3">
-            <div>
-              <p className="text-zinc-200 text-sm font-medium">Show on leaderboard</p>
-              <p className="text-zinc-600 text-[11px] mt-0.5">Others can see your rank</p>
-            </div>
-            <button
-              onClick={handleLeaderboardToggle}
-              disabled={toggling}
-              className={`relative w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${
-                onLeaderboard ? 'bg-violet-500' : 'bg-zinc-700'
-              } ${toggling ? 'opacity-50 cursor-not-allowed' : ''}`}
-              aria-label="Toggle leaderboard visibility"
-            >
-              <span
-                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
-                  onLeaderboard ? 'translate-x-5' : 'translate-x-0'
-                }`}
-              />
-            </button>
+          <div className="space-y-2">
+            <Toggle
+              label="Show on leaderboard"
+              sub="Others can see your rank"
+              value={onLeaderboard}
+              loading={toggling === 'leaderboard'}
+              onToggle={handleLeaderboardToggle}
+            />
+            <Toggle
+              label="Public list"
+              sub={listPublic ? 'Anyone can view your list' : 'Only you can see your list'}
+              value={listPublic}
+              loading={toggling === 'list'}
+              onToggle={handleListVisibilityToggle}
+            />
           </div>
         )}
 

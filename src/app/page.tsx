@@ -23,9 +23,9 @@ import BurgerMenu, { ProfileSheet } from '@/components/BurgerMenu';
 import NewCategoryModal from '@/components/NewCategoryModal';
 import RankRoadmapModal from '@/components/RankRoadmapModal';
 import RankCelebrationModal from '@/components/RankCelebrationModal';
-import LeaderboardModal from '@/components/LeaderboardModal';
+import LeaderboardPage from '@/components/LeaderboardPage';
 
-type View = 'home' | Category;
+type View = 'home' | 'leaderboard' | Category;
 
 export default function Home() {
   const { session, loading: authLoading, signOut } = useAuth();
@@ -47,7 +47,6 @@ export default function Home() {
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showRoadmap, setShowRoadmap] = useState(false);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [leaderboardNew, setLeaderboardNew] = useState(false);
   const [celebrationRank, setCelebrationRank] = useState<ReturnType<typeof getRank> | null>(null);
 
@@ -196,7 +195,7 @@ export default function Home() {
                 {/* Leaderboard */}
                 <button
                   onClick={() => {
-                    setShowLeaderboard(true);
+                    setView('leaderboard');
                     if (leaderboardNew) {
                       setLeaderboardNew(false);
                       localStorage.setItem('the-list-lb-seen', '1');
@@ -299,6 +298,11 @@ export default function Home() {
               </div>
             )}
           </>
+        ) : view === 'leaderboard' ? (
+          <LeaderboardPage
+            currentUserId={userId!}
+            onBack={() => setView('home')}
+          />
         ) : (
           <CategoryDetail
             category={view as Category}
@@ -361,9 +365,6 @@ export default function Home() {
         <RankCelebrationModal rank={celebrationRank} onClose={() => setCelebrationRank(null)} />
       )}
 
-      {showLeaderboard && userId && (
-        <LeaderboardModal currentUserId={userId} onClose={() => setShowLeaderboard(false)} />
-      )}
     </main>
   );
 }
