@@ -26,7 +26,7 @@ export default function LeaderboardPage({ currentUserId, onBack }: LeaderboardPa
   const [following, setFollowing] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('all');
-  const [viewingUser, setViewingUser] = useState<{ userId: string; username: string } | null>(null);
+  const [viewingUser, setViewingUser] = useState<{ userId: string; username: string; isVip: boolean; seriesCount: number } | null>(null);
 
   const fetchData = useCallback(async () => {
     const [lbRes, followRes] = await Promise.all([
@@ -65,6 +65,8 @@ export default function LeaderboardPage({ currentUserId, onBack }: LeaderboardPa
         <FriendListModal
           userId={viewingUser.userId}
           username={viewingUser.username}
+          isVip={viewingUser.isVip}
+          seriesCount={viewingUser.seriesCount}
           onBack={() => setViewingUser(null)}
         />
       </div>
@@ -151,7 +153,7 @@ export default function LeaderboardPage({ currentUserId, onBack }: LeaderboardPa
                   className={`flex-1 text-sm font-medium truncate text-left transition-colors ${
                     isMe ? 'text-violet-300 cursor-default' : 'text-zinc-200 hover:text-violet-300'
                   }`}
-                  onClick={() => !isMe && setViewingUser({ userId: entry.user_id, username: entry.username })}
+                  onClick={() => !isMe && setViewingUser({ userId: entry.user_id, username: entry.username, isVip: entry.is_vip, seriesCount: entry.series_count })}
                   disabled={isMe}
                 >
                   {entry.is_vip && <span className="mr-1">👑</span>}

@@ -31,10 +31,12 @@ type ViewMode = 'list' | 'grid' | 'bigGrid';
 interface FriendListModalProps {
   userId: string;
   username: string;
+  isVip?: boolean;
+  seriesCount?: number;
   onBack: () => void;
 }
 
-export default function FriendListModal({ userId, username, onBack }: FriendListModalProps) {
+export default function FriendListModal({ userId, username, isVip, seriesCount, onBack }: FriendListModalProps) {
   const [items, setItems] = useState<FriendItem[]>([]);
   const [customCats, setCustomCats] = useState<FriendCategory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -153,12 +155,27 @@ export default function FriendListModal({ userId, username, onBack }: FriendList
 
       {/* Profile strip */}
       <div className="flex items-center gap-3 mb-6 pb-5 border-b border-zinc-800">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-sky-500 flex items-center justify-center flex-shrink-0">
-          <span className="text-white text-xl font-bold">{username.charAt(0).toUpperCase()}</span>
+        <div className="relative flex-shrink-0">
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-sky-500 flex items-center justify-center">
+            <span className="text-white text-xl font-bold">{username.charAt(0).toUpperCase()}</span>
+          </div>
+          {isVip && <span className="absolute -top-1 -right-1 text-sm leading-none">👑</span>}
         </div>
         <div>
-          <h2 className="text-xl font-bold text-zinc-100">{username}</h2>
-          <p className="text-zinc-500 text-sm">{items.length} title{items.length !== 1 ? 's' : ''}</p>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold text-zinc-100">{username}</h2>
+            {isVip && <span className="text-xs font-semibold text-yellow-400 bg-yellow-400/10 border border-yellow-400/20 rounded-full px-2 py-0.5">VIP</span>}
+          </div>
+          <div className="flex items-center gap-2 mt-0.5">
+            {items.length > 0 ? (
+              <>
+                <p className="text-zinc-500 text-sm">{items.length} title{items.length !== 1 ? 's' : ''}</p>
+                {seriesCount !== undefined && <p className="text-zinc-600 text-xs">· {seriesCount} series</p>}
+              </>
+            ) : seriesCount !== undefined ? (
+              <p className="text-zinc-500 text-sm">{seriesCount} series</p>
+            ) : null}
+          </div>
         </div>
       </div>
 
