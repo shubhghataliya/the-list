@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Menu, X, Database, FolderPlus, User, LogOut, Calendar } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 interface BurgerMenuProps {
   onDataClick: () => void;
@@ -73,15 +74,44 @@ interface ProfileSheetProps {
   email: string;
   createdAt: string | null;
   totalItems: number;
+  userId?: string;
   onSignOut: () => void;
   onClose: () => void;
 }
 
-export function ProfileSheet({ email, createdAt, totalItems, onSignOut, onClose }: ProfileSheetProps) {
+export function ProfileSheet({ email, createdAt, totalItems, userId, onSignOut, onClose }: ProfileSheetProps) {
   const initial = email.charAt(0).toUpperCase();
   const joined = createdAt
     ? new Date(createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
     : null;
+
+  const [isVip, setIsVip] = useState(false);
+  const [onLeaderboard, setOnLeaderboard] = useState(true);
+  const [toggling, setToggling] = useState(false);
+
+  useEffect(() => {
+    if (!userId) return;
+    supabase
+      .from('profiles')
+      .select('is_vip, on_leaderboard')
+      .eq('id', userId)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          setIsVip(data.is_vip ?? false);
+          setOnLeaderboard(data.on_leaderboard ?? true);
+        }
+      });
+  }, [userId]);
+
+  const handleLeaderboardToggle = async () => {
+    if (toggling) return;
+    setToggling(true);
+    const next = !onLeaderboard;
+    setOnLeaderboard(next);
+    await supabase.rpc('toggle_leaderboard', { show_on_lb: next });
+    setToggling(false);
+  };
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-4 animate-fade-in"
@@ -91,11 +121,17 @@ export function ProfileSheet({ email, createdAt, totalItems, onSignOut, onClose 
 
         {/* Avatar + email */}
         <div className="flex flex-col items-center gap-3">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-violet-500 to-sky-500 flex items-center justify-center">
-            <span className="text-white text-2xl font-bold">{initial}</span>
+          <div className="relative w-16 h-16">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-violet-500 to-sky-500 flex items-center justify-center">
+              <span className="text-white text-2xl font-bold">{initial}</span>
+            </div>
+            {isVip && (
+              <span className="absolute -top-1 -right-1 text-base leading-none">👑</span>
+            )}
           </div>
           <div className="text-center">
             <p className="text-zinc-100 font-semibold text-sm break-all">{email}</p>
+            {isVip && <p className="text-yellow-400 text-[11px] font-medium mt-0.5">VIP</p>}
           </div>
         </div>
 
@@ -110,6 +146,30 @@ export function ProfileSheet({ email, createdAt, totalItems, onSignOut, onClose 
             <p className="text-zinc-400 text-[11px]">{joined ?? '—'}</p>
           </div>
         </div>
+
+        {/* VIP: Leaderboard toggle */}
+        {isVip && (
+          <div className="flex items-center justify-between bg-zinc-950 rounded-xl px-4 py-3">
+            <div>
+              <p className="text-zinc-200 text-sm font-medium">Show on leaderboard</p>
+              <p className="text-zinc-600 text-[11px] mt-0.5">Others can see your rank</p>
+            </div>
+            <button
+              onClick={handleLeaderboardToggle}
+              disabled={toggling}
+              className={`relative w-11 h-6 rounded-full transition-colors duration-200 flex-shrink-0 ${
+                onLeaderboard ? 'bg-violet-500' : 'bg-zinc-700'
+              } ${toggling ? 'opacity-50 cursor-not-allowed' : ''}`}
+              aria-label="Toggle leaderboard visibility"
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
+                  onLeaderboard ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+        )}
 
         {/* Sign out */}
         <button

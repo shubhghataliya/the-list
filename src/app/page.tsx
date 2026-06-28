@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Loader2, Film } from 'lucide-react';
+import { Loader2, Film, Trophy } from 'lucide-react';
 import { Category, ListItem } from '@/types';
 import { CATEGORIES, getTotalCount, getTypeCount } from '@/utils/helpers';
 import { getRank, getNextRank, RANKS } from '@/utils/ranks';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 import { useListData } from '@/hooks/useListData';
 import { useCustomCategories } from '@/hooks/useCustomCategories';
 
@@ -22,6 +23,7 @@ import BurgerMenu, { ProfileSheet } from '@/components/BurgerMenu';
 import NewCategoryModal from '@/components/NewCategoryModal';
 import RankRoadmapModal from '@/components/RankRoadmapModal';
 import RankCelebrationModal from '@/components/RankCelebrationModal';
+import LeaderboardModal from '@/components/LeaderboardModal';
 
 type View = 'home' | Category;
 
@@ -45,6 +47,8 @@ export default function Home() {
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showRoadmap, setShowRoadmap] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [leaderboardNew, setLeaderboardNew] = useState(() => !localStorage.getItem('the-list-lb-seen'));
   const [celebrationRank, setCelebrationRank] = useState<ReturnType<typeof getRank> | null>(null);
 
   const totalCount = useMemo(() => getTotalCount(data), [data]);
@@ -68,6 +72,14 @@ export default function Home() {
       localStorage.setItem('the-list-rank', rankName);
     }
   }, [dataLoading, currentRank]);
+
+  // Ensure profile row exists for this user (covers edge cases the trigger may miss)
+  useEffect(() => {
+    if (!userId || !session?.user?.email) return;
+    supabase.from('profiles')
+      .insert({ id: userId, username: session.user.email.split('@')[0] })
+      .then(() => {});
+  }, [userId, session?.user?.email]);
 
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
@@ -167,6 +179,26 @@ export default function Home() {
                     </div>
                   )}
                 </div>
+                {/* Leaderboard */}
+                <button
+                  onClick={() => {
+                    setShowLeaderboard(true);
+                    if (leaderboardNew) {
+                      setLeaderboardNew(false);
+                      localStorage.setItem('the-list-lb-seen', '1');
+                    }
+                  }}
+                  className="relative p-2 text-zinc-500 hover:text-yellow-400 hover:bg-yellow-400/10 rounded-xl transition-all"
+                  title="Leaderboard"
+                >
+                  <Trophy className="w-4 h-4" />
+                  {leaderboardNew && (
+                    <span className="absolute top-1 right-1 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-400" />
+                    </span>
+                  )}
+                </button>
                 {/* Burger */}
                 <BurgerMenu
                   onDataClick={() => setShowData((v) => !v)}
@@ -300,6 +332,7 @@ export default function Home() {
           email={session.user.email ?? ''}
           createdAt={session.user.created_at}
           totalItems={Object.values(data).reduce((sum, arr) => sum + arr.length, 0)}
+          userId={userId}
           onSignOut={signOut}
           onClose={() => setShowProfile(false)}
         />
@@ -311,6 +344,10 @@ export default function Home() {
 
       {celebrationRank && (
         <RankCelebrationModal rank={celebrationRank} onClose={() => setCelebrationRank(null)} />
+      )}
+
+      {showLeaderboard && userId && (
+        <LeaderboardModal currentUserId={userId} onClose={() => setShowLeaderboard(false)} />
       )}
     </main>
   );
