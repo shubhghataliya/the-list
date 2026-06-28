@@ -54,6 +54,16 @@ export default function Home() {
   const totalCount = useMemo(() => getTotalCount(data), [data]);
   const moviesCount = useMemo(() => getTypeCount(data, 'movies', allCategories), [data, allCategories]);
   const seriesCount = useMemo(() => getTypeCount(data, 'series', allCategories), [data, allCategories]);
+
+  const existingItems = useMemo(() => {
+    const map = new Map<string, string>();
+    allCategories.forEach((cat) => {
+      (data[cat.id] ?? []).forEach((item) => {
+        map.set(item.title.toLowerCase(), cat.label);
+      });
+    });
+    return map;
+  }, [data, allCategories]);
   const currentRank = useMemo(() => getRank(seriesCount), [seriesCount]);
   const nextRank = useMemo(() => getNextRank(seriesCount), [seriesCount]);
 
@@ -307,6 +317,7 @@ export default function Home() {
         <AddModal
           defaultCategory={defaultAddCategory}
           categories={allCategories}
+          existingItems={existingItems}
           onAdd={(title, category, posterPath) => addItem(title, category, posterPath)}
           onClose={() => setShowAdd(false)}
         />

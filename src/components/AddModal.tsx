@@ -21,17 +21,20 @@ interface TMDBResult {
 interface AddModalProps {
   defaultCategory: Category;
   categories: CategoryConfig[];
+  existingItems?: Map<string, string>; // lowercase title -> category label
   onAdd: (title: string, category: Category, posterPath?: string) => void;
   onClose: () => void;
 }
 
-export default function AddModal({ defaultCategory, categories, onAdd, onClose }: AddModalProps) {
+export default function AddModal({ defaultCategory, categories, existingItems, onAdd, onClose }: AddModalProps) {
   const [query, setQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<TMDBResult[]>([]);
   const [selected, setSelected] = useState<TMDBResult | null>(null);
   const [category, setCategory] = useState<Category>(defaultCategory);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const duplicateIn = existingItems?.get(query.trim().toLowerCase()) ?? null;
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -186,6 +189,16 @@ export default function AddModal({ defaultCategory, categories, onAdd, onClose }
                   <p className="text-emerald-400 text-xs mt-1">✓ Poster saved</p>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Duplicate warning */}
+          {duplicateIn && (
+            <div className="flex items-center gap-2.5 bg-yellow-500/10 border border-yellow-500/25 rounded-xl px-3.5 py-2.5 animate-fade-in">
+              <span className="text-base leading-none flex-shrink-0">⚠️</span>
+              <p className="text-yellow-300 text-xs">
+                Already in <span className="font-semibold">{duplicateIn}</span> — you can still add it again
+              </p>
             </div>
           )}
 
