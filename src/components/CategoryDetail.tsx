@@ -320,6 +320,7 @@ interface CategoryDetailProps {
   onDeleteItem?: (id: string, category: Category) => void;
   onUpdatePoster?: (id: string, posterPath: string) => void;
   onRenameCategory?: (id: string, newLabel: string) => void;
+  onDeleteCategory?: (id: string) => void;
 }
 
 export default function CategoryDetail({
@@ -332,6 +333,7 @@ export default function CategoryDetail({
   onDeleteItem,
   onUpdatePoster,
   onRenameCategory,
+  onDeleteCategory,
 }: CategoryDetailProps) {
   const config = getCategoryConfig(category, allCategories);
   const { starred, toggleStar } = useStarred();
@@ -341,6 +343,7 @@ export default function CategoryDetail({
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [deleteTarget, setDeleteTarget] = useState<ListItem | null>(null);
   const [showDeleteAll, setShowDeleteAll] = useState(false);
+  const [showDeleteCategory, setShowDeleteCategory] = useState(false);
   const [fetchingPosters, setFetchingPosters] = useState(false);
   const [posterProgress, setPosterProgress] = useState({ done: 0, total: 0 });
   const [showExport, setShowExport] = useState(false);
@@ -595,6 +598,15 @@ export default function CategoryDetail({
             >
               <Download className="w-4 h-4" />
             </button>
+            {isCustom && onDeleteCategory && (
+              <button
+                onClick={() => setShowDeleteCategory(true)}
+                className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
+                title="Delete this category"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
             <button
               onClick={enterEdit}
               disabled={items.length === 0}
@@ -906,6 +918,17 @@ export default function CategoryDetail({
           config={config}
           items={sortedItems}
           onClose={() => setShowExport(false)}
+        />,
+        document.body
+      )}
+
+      {showDeleteCategory && createPortal(
+        <DeleteConfirmModal
+          title={config.label}
+          heading="Delete this category?"
+          message={`"${config.label}" and all ${items.length} title${items.length !== 1 ? 's' : ''} inside will be permanently deleted.`}
+          onConfirm={() => { setShowDeleteCategory(false); onDeleteCategory?.(category); }}
+          onCancel={() => setShowDeleteCategory(false)}
         />,
         document.body
       )}

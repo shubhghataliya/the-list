@@ -69,10 +69,11 @@ const CUSTOM_PALETTE = [
 export function buildCustomCategoryConfig(
   name: string,
   type: 'movies' | 'series',
-  paletteIndex: number
+  paletteIndex: number,
+  existingId?: string
 ): CategoryConfig {
   const colors = CUSTOM_PALETTE[paletteIndex % CUSTOM_PALETTE.length];
-  const id = `custom-${name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
+  const id = existingId ?? `custom-${name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
   return {
     id,
     label: name,

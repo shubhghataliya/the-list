@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Loader2, Film } from 'lucide-react';
 import { Category, ListItem } from '@/types';
 import { CATEGORIES, getTotalCount, getTypeCount } from '@/utils/helpers';
@@ -32,7 +32,7 @@ export default function Home() {
   const { data, loading: dataLoading, addItem, addBulk, updateCategory, deleteItem, updatePoster, importAll } =
     useListData(userId);
 
-  const { customCategories, addCustomCategory, renameCustomCategory } = useCustomCategories();
+  const { customCategories, addCustomCategory, renameCustomCategory, deleteCustomCategory } = useCustomCategories(userId);
 
   const allCategories = useMemo(() => [...CATEGORIES, ...customCategories], [customCategories]);
 
@@ -53,23 +53,21 @@ export default function Home() {
   const currentRank = useMemo(() => getRank(seriesCount), [seriesCount]);
   const nextRank = useMemo(() => getNextRank(seriesCount), [seriesCount]);
 
-  const prevRankRef = useRef<string | null>(null);
-  const dataLoadedRef = useRef(false);
   useEffect(() => {
     if (dataLoading) return;
-    const rankName = getRank(seriesCount).name;
-    if (!dataLoadedRef.current) {
-      dataLoadedRef.current = true;
-      prevRankRef.current = rankName;
+    const rankName = currentRank.name;
+    const stored = localStorage.getItem('the-list-rank');
+    if (!stored) {
+      localStorage.setItem('the-list-rank', rankName);
       return;
     }
-    if (prevRankRef.current && rankName !== prevRankRef.current) {
-      const prevIdx = RANKS.findIndex((r) => r.name === prevRankRef.current);
-      const currIdx = RANKS.findIndex((r) => r.name === rankName);
-      if (currIdx > prevIdx) setCelebrationRank(getRank(seriesCount));
+    const storedIdx = RANKS.findIndex((r) => r.name === stored);
+    const currIdx = RANKS.findIndex((r) => r.name === rankName);
+    if (currIdx > storedIdx) {
+      setCelebrationRank(currentRank);
+      localStorage.setItem('the-list-rank', rankName);
     }
-    prevRankRef.current = rankName;
-  }, [seriesCount, dataLoading]);
+  }, [dataLoading, currentRank]);
 
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
@@ -96,6 +94,28 @@ export default function Home() {
     const a = document.createElement('a');
     a.href = url;
     a.download = `the-list-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportList = () => {
+    const lines: string[] = [];
+    allCategories.forEach((cat) => {
+      const items = data[cat.id];
+      if (!items || items.length === 0) return;
+      if (lines.length > 0) lines.push('');
+      lines.push(`${cat.label.toUpperCase()} (${items.length}):`);
+      items.forEach((item, i) => lines.push(`${i + 1}.${item.title}`));
+    });
+    const total = allCategories.reduce((sum, cat) => sum + (data[cat.id]?.length ?? 0), 0);
+    const content = lines.join('\n');
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `The_List_${total}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -224,8 +244,10 @@ export default function Home() {
               <div className="mt-4 animate-fade-in">
                 <ImportExport
                   data={data}
+                  allCategories={allCategories}
                   onImport={importAll}
                   onExport={handleExport}
+                  onExportList={handleExportList}
                   onTextImport={() => setShowTextImport(true)}
                 />
               </div>
@@ -242,6 +264,7 @@ export default function Home() {
             onDeleteItem={deleteItem}
             onUpdatePoster={updatePoster}
             onRenameCategory={renameCustomCategory}
+            onDeleteCategory={(id) => { deleteCustomCategory(id); setView('home'); }}
           />
         )}
       </div>
